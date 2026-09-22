@@ -1,0 +1,24 @@
+# El contenedor instala sus propias dependencias: copiar node_modules del host
+# mete binarios compilados para otro sistema operativo y engorda el contexto.
+node_modules
+npm-debug.log*
+
+# Nunca dentro de la imagen: son las credenciales reales.
+.env
+.env.*
+!.env.example
+
+.git
+.gitignore
+docs
+*.md
+!package.json
+
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+coverage
+tmp
+*.zip

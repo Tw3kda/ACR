@@ -1,0 +1,23 @@
+{
+  "name": "acr-consent-api",
+  "version": "1.0.0",
+  "description": "Lambda (Express) detrás de API Gateway HTTP API para el consentimiento informado firmado",
+  "private": true,
+  "type": "module",
+  "main": "src/handlers/api.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/local.js",
+    "dev": "node --watch src/local.js",
+    "smoke": "node scripts/smoke.js",
+    "start:aws": "node --env-file=.env.local src/local.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.1127.0",
+    "@aws-sdk/client-s3": "^3.1127.0",
+    "express": "^5.2.1",
+    "serverless-http": "^4.0.0"
+  }
+}

@@ -1,0 +1,58 @@
+# =============================================================================
+# Entorno local con LocalStack: el API de Express contra DynamoDB y S3 reales
+# (emulados), sin cuenta de AWS.
+#
+#   docker compose -f docker-compose.localstack.yml up --build
+#
+# Qué ejercita de verdad: el registro de evidencia en S3 (escritura única con
+# If-None-Match, punteros, cadena de hashes) y la subida del PDF (URL firmada
+# con checksum, PUT directo). Es justo lo que los stubs no cubren.
+#
+# La tabla y el bucket los crea el MISMO Terraform que en AWS (infra/platform),
+# aplicado con `tflocal`. No hay una segunda definición "para local": lo que
+# se valida aquí es el .tf de verdad. Lo orquesta scripts/localstack.mjs:
+#
+#   node scripts/localstack.mjs
+#
+# Qué NO cubre, porque en LocalStack son funciones de pago (Pro): Cognito, API
+# Gateway v2, ECR y Lambda desde imagen. Cognito sigue en `stub` (login con el
+# usuario de prueba de .env.localstack) y infra/api no se aplica aquí.
+#
+# HOST_IP: la IP de tu PC en la red local. Hace falta porque la URL firmada
+# para subir el PDF lleva el host dentro de la firma, y la tablet tiene que
+# poder resolverlo — `localhost` y `localstack` no le sirven.
+# =============================================================================
+services:
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      # Obligatorio desde 2025, también en el plan gratuito. scripts/localstack.mjs
+      # lo lee de ~/.localstack/auth.json (lo escribe `localstack auth set-token`)
+      # o de la variable de entorno, y aborta con instrucciones si no hay ninguno.
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN}
+      # Solo lo que usa el API. Menos servicios = arranque más rápido.
+      - SERVICES=s3,sts,iam
+      - DEBUG=0
+      # LocalStack acepta cualquier credencial; estas son las convencionales.
+      - AWS_DEFAULT_REGION=us-east-1
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "3000:3000"
+    env_file: .env.localstack
+    environment:
+      # Público a propósito: es el host que va dentro de la URL firmada.
+      - S3_ENDPOINT=http://${HOST_IP:-localhost}:4566
+    depends_on:
+      localstack:
+        condition: service_healthy

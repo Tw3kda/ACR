@@ -1,0 +1,27 @@
+# Proveedores descargados por `terraform init`.
+.terraform/
+
+# El estado contiene identificadores de recursos y, si se activa, el secreto
+# del app client. Nunca al repositorio: va a un backend remoto (S3) o se queda
+# en local mientras se prueba.
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Lo genera tflocal en cada ejecución y lo borra al terminar; si queda por un
+# corte a medias, apuntaría el despliegue REAL a localhost. deploy.mjs lo
+# borra antes de tocar AWS por si acaso.
+localstack_providers_override.tf
+
+# Estado del workspace `localstack` del bootstrap (LocalStack no persiste, así
+# que tampoco vale la pena conservarlo).
+terraform.tfstate.d/
+
+# Valores locales de variables. `image.auto.tfvars` NO se ignora a propósito:
+# registra qué imagen está desplegada y conviene versionarlo.
+*.tfvars.local
+override.tf
+override.tf.json
+
+# El lock de proveedores sí se versiona: fija las versiones exactas.
+!.terraform.lock.hcl

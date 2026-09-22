@@ -1,0 +1,30 @@
+{
+  "version": "2.0",
+  "routeKey": "POST /auth/login",
+  "rawPath": "/auth/login",
+  "rawQueryString": "",
+  "headers": {
+    "content-type": "application/json",
+    "x-api-key": "clave-de-la-app",
+    "user-agent": "okhttp/4.12.0"
+  },
+  "body": "{\"email\":\"demo@acrvitallaboral.com\",\"password\":\"Demo1234!\"}",
+  "isBase64Encoded": false,
+  "requestContext": {
+    "accountId": "123456789012",
+    "apiId": "abc123",
+    "domainName": "abc123.execute-api.us-east-1.amazonaws.com",
+    "http": {
+      "method": "POST",
+      "path": "/auth/login",
+      "protocol": "HTTP/1.1",
+      "sourceIp": "190.85.12.34",
+      "userAgent": "okhttp/4.12.0"
+    },
+    "requestId": "JKJaXmPLvHcESHA=",
+    "routeKey": "POST /auth/login",
+    "stage": "$default",
+    "time": "31/Aug/2026:20:15:30 +0000",
+    "timeEpoch": 1788293730123
+  }
+}
