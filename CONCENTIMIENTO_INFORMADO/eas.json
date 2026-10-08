@@ -1,0 +1,22 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "apk": {
+      "distribution": "internal",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://6ecti46je9.execute-api.us-east-1.amazonaws.com/",
+        "EXPO_PUBLIC_API_LOG": "false",
+        "EXPO_PUBLIC_PDF_S3_BUCKET": "medical-consent-pdfs-781485980004",
+        "EXPO_PUBLIC_PDF_S3_PREFIX": "consents",
+        "EXPO_PUBLIC_CLINIC_LOCATION_ID": "SEDE_NORTE_01"
+      }
+    }
+  }
+}

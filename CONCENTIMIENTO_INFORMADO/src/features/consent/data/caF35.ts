@@ -1,0 +1,240 @@
+/**
+ * CA-F-35 v1.0 — copia de respaldo incluida en el APK.
+ *
+ * GENERADO desde `API GATEWAY/templates/CA-F-35.json` (la fuente que se publica en AWS).
+ * No editar a mano: cambiar el JSON, publicarlo, y regenerar esta copia en la
+ * próxima versión del APK. La app solo la usa si la tablet nunca ha descargado
+ * las plantillas (sin conexión desde la instalación).
+ */
+export const CA_F_35 = {
+  "code": "CA-F-35",
+  "version": "1.0",
+  "title": "Protección de datos y consentimiento informado — Test de drogas",
+  "examType": "TEST_DE_DROGAS",
+  "effectiveDate": "2023-01-09",
+  "blocks": [
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "Autorización para el tratamiento de datos personales y consentimiento informado servicio de toma de muestras y laboratorio clínico"
+    },
+    {
+      "type": "paragraph",
+      "text": "La IPS ACR VITAL LABORAL SAS, identificada con NIT: 901066615 será la responsable del tratamiento y, en tal virtud, podrá recolectar, almacenar, y usar los datos personales de los pacientes como antecedentes personales y familiares Nombres, apellidos, edad, identificación, número de contacto, género, fecha de nacimiento, correo electrónico y otros que fuesen necesarios para el correcto diligenciamiento de la historia clínica y la realización de procedimientos asistenciales de Toma y procesamiento de muestras de laboratorio clínico."
+    },
+    {
+      "type": "paragraph",
+      "text": "Manifiesto que me informaron que en caso de recolección de mi información sensible como la de mi estado de salud, tengo derecho a contestar o no las preguntas que me formulen y a entregar o no los datos solicitados."
+    },
+    {
+      "type": "paragraph",
+      "text": "Entiendo que son datos sensibles aquellos que afectan la intimidad del Titular o cuyo uso indebido puede generar discriminación como el estado de salud."
+    },
+    {
+      "type": "paragraph",
+      "text": "Manifiesto que me informaron que los datos sensibles que se recolectarán serán utilizados para el adecuado diligenciamiento de la historia clínica en la IPS ACR VITAL LABORAL SAS."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Derechos del titular"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sus derechos como titular del dato son los previstos en La Constitución y en la Ley 1581 de 2012, especialmente los siguientes:"
+    },
+    {
+      "type": "paragraph",
+      "text": "a) Acceder en forma gratuita a los datos proporcionados que hayan sido objeto de diagnóstico y tratamiento.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "b) Solicitar la actualización y rectificación de su información frente a datos parciales, inexactos, incompletos, fraccionados, que induzcan a error, o a aquellos cuyo tratamiento esté prohibido o no haya sido autorizado.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "c) Solicitar prueba de la autorización otorgada.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "d) Presentar ante la Superintendencia de Industria y Comercio (SIC) quejas por infracciones a lo dispuesto en la normatividad vigente.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "e) Revocar la autorización y/o solicitar la supresión del dato, a menos que exista un deber legal o contractual que haga imperativo conservar la información.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "f) Abstenerse de responder las preguntas sobre datos sensibles o sobre datos de las niñas y niños y adolescentes.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "Estos derechos los podré ejercer a través de los canales o medios dispuestos por la IPS ACR VITAL LABORAL SAS, para la atención al público, el correo electrónico: acrvitallaboralsas@gmail.com y en las instalaciones de la IPS Calle 7 # 07-20 Tocancipá."
+    },
+    {
+      "type": "paragraph",
+      "text": "Por todo lo anterior, he otorgado mi consentimiento a la IPS ACR VITAL LABORAL SAS, para que trate mi información personal de acuerdo con la Política de Tratamiento de Datos Personales."
+    },
+    {
+      "type": "paragraph",
+      "text": "Manifiesto que la presente autorización me fue solicitada y puesta de presente antes de entregar mis datos y que la suscribo de forma libre y voluntaria una vez leída en su totalidad."
+    },
+    {
+      "type": "spacer"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "Consentimiento informado test de drogas"
+    },
+    {
+      "type": "paragraph",
+      "text": "El test de drogas es un examen realizado a partir de una muestra de orina para detectar en el organismo la presencia de sustancias psicoactivas. Es importante que usted como paciente informe al profesional de la salud sobre los medicamentos que ha consumido hoy y en los días previos a la toma de este examen y entienda que un resultado positivo de esta prueba, indica con alta probabilidad, de la presencia de ésta(s) sustancia(s) en el organismo."
+    },
+    {
+      "type": "paragraph",
+      "text": "Existen varias pruebas de laboratorio diseñadas para este propósito las cuales se dividen básicamente en dos tipos: Presuntivas: que en caso de ser positivas indican una posible presencia de las sustancias psicoactivas y Confirmatorias. La prueba que se realizará inicialmente será de tipo presuntivo y en caso de salir positiva o indeterminada se realiza una prueba confirmatoria."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Objetivo procedimiento"
+    },
+    {
+      "type": "paragraph",
+      "text": "A partir de una muestra de orina efectuar las pruebas necesarias para detectar en el organismo la presencia de sustancias psicoactivas, tales como marihuana, cocaína, bazuco, anfetaminas (éxtasis), benzodiacepinas (pepas), opiáceos (heroína) y sustancias similares o derivadas."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Beneficios procedimiento"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "Ninguna conocida para el paciente."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Posibles riesgos y/o complicaciones procedimiento"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "Por ser realizada a partir de una muestra de orina el procedimiento no presenta riesgos para la salud."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Implicaciones del acto asistencial"
+    },
+    {
+      "type": "paragraph",
+      "text": "Las implicaciones de un acto asistencial para la toma de muestras de laboratorio clínico pueden ser bastante significativas en términos de precisión de los resultados y la atención al paciente. Aquí se nombran algunas implicaciones importantes:"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "Calidad de la muestra: La calidad de la muestra es crucial para obtener resultados precisos en los análisis de laboratorio. Un acto asistencial deficiente en la toma de muestras puede llevar a muestras contaminadas, deterioradas o mal etiquetadas, lo que puede afectar la validez de los resultados.",
+        "Exactitud de los resultados: Una toma de muestra adecuada garantiza que los resultados de laboratorio reflejen con precisión la condición del paciente. Errores en la toma de muestras pueden llevar a resultados incorrectos, lo que a su vez puede afectar el diagnóstico y tratamiento del paciente.",
+        "Seguridad del paciente: Un acto asistencial deficiente en la toma de muestras puede representar riesgos para la seguridad del paciente, como infecciones asociadas al cuidado de la salud si no se siguen las prácticas adecuadas de asepsia.",
+        "Cumplimiento normativo: Existen normativas y estándares de calidad que regulan la toma de muestras de laboratorio clínico para garantizar la fiabilidad de los resultados. Un acto asistencial deficiente puede resultar en incumplimiento de estas normativas, lo que podría tener implicaciones legales y éticas.",
+        "Experiencia del paciente: La experiencia del paciente también se ve afectada por la calidad de la toma de muestras. Un proceso bien gestionado, con personal capacitado y amable, puede mejorar la experiencia del paciente y su satisfacción con el servicio de laboratorio."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "En resumen, un acto asistencial adecuado en la toma de muestras de laboratorio clínico es fundamental para garantizar resultados precisos, seguridad del paciente, cumplimiento normativo y una experiencia positiva para el paciente."
+    },
+    {
+      "type": "paragraph",
+      "text": "Una vez recibido el consentimiento informado se entrega archivo para que haga parte integral de la historia clínica del paciente."
+    }
+  ],
+  "decision": {
+    "prompt": "¿Autoriza la realización del test de drogas?",
+    "accept": {
+      "label": "Acepto",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Al firmar este documento declaro que he sido informado verbalmente, he leído y entendido la información correspondiente al procedimiento que se me va a realizar, pude formular las preguntas que tenía y encontré las respuestas que me permiten comprender los beneficios, riesgos, efectos. Declaro que soy mayor de edad y en uso pleno de mis facultades doy mi consentimiento y firmo."
+        }
+      ]
+    },
+    "decline": {
+      "label": "No acepto",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Desistimiento"
+        },
+        {
+          "type": "note",
+          "text": "Yo, el (la) abajo firmante, identificado(a) como aparece al pie de mi firma, actuando en nombre propio o como representante legal del paciente, declaro que he sido informado(a) de la naturaleza y riesgos del procedimiento propuesto, manifiesto de forma libre y consciente mi DESISTIMIENTO para su realización, haciéndome responsable de las consecuencias que puedan derivarse de esta decisión."
+        }
+      ]
+    }
+  },
+  "fields": [
+    {
+      "key": "nombre",
+      "label": "Nombre del paciente",
+      "input": "text",
+      "required": true,
+      "placeholder": "Nombres y apellidos"
+    },
+    {
+      "key": "cedula",
+      "label": "Cédula del paciente",
+      "input": "number",
+      "required": true,
+      "placeholder": "Número de identificación"
+    }
+  ],
+  "signatures": [
+    {
+      "key": "patient",
+      "label": "Firma del paciente",
+      "signer": "patient",
+      "required": true
+    },
+    {
+      "key": "professional",
+      "label": "Firma del profesional",
+      "signer": "professional",
+      "required": true
+    }
+  ],
+  "footer": [
+    {
+      "type": "signature",
+      "key": "professional"
+    },
+    {
+      "type": "signature",
+      "key": "patient"
+    },
+    {
+      "type": "field",
+      "key": "cedula"
+    },
+    {
+      "type": "date",
+      "label": "Fecha y hora"
+    }
+  ]
+} as const;

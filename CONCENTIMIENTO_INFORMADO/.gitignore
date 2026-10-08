@@ -1,0 +1,48 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+tsconfig.*.json
+!tsconfig.json
+
+# Compiled output emitted next to the sources. Metro resolves .js BEFORE .ts,
+# so a stray build artifact silently shadows the real source file.
+/src/**/*.js
+/src/**/*.jsx
+
+# generated native folders
+/ios
+/android
