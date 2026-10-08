@@ -1,29 +1,31 @@
 #!/usr/bin/env node
 /**
- * Despliegue: imagen → ECR → Terraform.
+ * Despliegue: paquete .zip → Terraform. No necesita Docker.
  *
- *   node scripts/deploy.mjs              build + push + apply de infra/api (pide confirmación)
+ *   node scripts/deploy.mjs              paquete + apply de infra/api (pide confirmación)
  *   node scripts/deploy.mjs --yes        igual, sin preguntar
- *   node scripts/deploy.mjs --plan       build + push + plan de infra/api, sin aplicar
- *   node scripts/deploy.mjs --no-build   solo apply de infra/api con la última imagen subida
+ *   node scripts/deploy.mjs --plan       paquete + plan de infra/api, sin aplicar
+ *   node scripts/deploy.mjs --no-build   solo apply de infra/api con el último paquete
  *   node scripts/deploy.mjs --platform   aplica infra/platform (y bootstrap si hace falta). Sin build.
+ *   node scripts/deploy.mjs --web        aplica infra/web, compila la web de consulta
+ *                                        (WEB PDF CHECK/my-app) con la URL del API y la sube.
  *
  * Tres estados de Terraform, tres responsabilidades:
  *
  *   infra/bootstrap   el bucket del estado. Una vez por cuenta.
  *   infra/platform    KMS, DynamoDB, S3, Cognito. Guarda datos; se aplica a mano
  *                     con --platform, rara vez.
- *   infra/api         ECR, Lambda, API Gateway, IAM. Se aplica en cada push.
+ *   infra/api         Lambda (.zip), API Gateway, IAM. Se aplica en cada push.
  *
  * El despliegue normal solo toca infra/api. Por mal que salga, no alcanza a la
  * tabla, al bucket ni al user pool: están en otro estado y este módulo solo
  * los lee.
  *
  * Nunca usa `aws lambda update-function-code`: eso cambia la función por fuera
- * de Terraform y el siguiente apply la devolvería a la imagen anterior.
+ * de Terraform y el siguiente apply la devolvería al paquete anterior.
  */
 import { execSync, spawnSync } from 'node:child_process';
-import { existsSync, unlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, rmSync, unlinkSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -32,14 +34,16 @@ const INFRA = {
   bootstrap: path.join(ROOT, 'infra', 'bootstrap'),
   platform: path.join(ROOT, 'infra', 'platform'),
   api: path.join(ROOT, 'infra', 'api'),
+  web: path.join(ROOT, 'infra', 'web'),
 };
-const REPO_NAME = 'acr-consent-api';
+const WEB_APP = path.resolve(ROOT, '..', 'WEB PDF CHECK', 'my-app');
 
 const args = new Set(process.argv.slice(2));
 const AUTO_APPROVE = args.has('--yes');
 const PLAN_ONLY = args.has('--plan');
 const SKIP_BUILD = args.has('--no-build');
 const PLATFORM = args.has('--platform');
+const WEB = args.has('--web');
 const APPROVE = AUTO_APPROVE ? '-auto-approve' : '';
 
 // --- utilidades --------------------------------------------------------------
@@ -67,7 +71,7 @@ function capture(cmd, opts = {}) {
 
 // --- 1. requisitos -----------------------------------------------------------
 log('Comprobando herramientas');
-for (const tool of PLATFORM || SKIP_BUILD ? ['aws', 'terraform'] : ['docker', 'aws', 'terraform']) {
+for (const tool of ['aws', 'terraform', 'npm']) {
   if (capture(`${tool} --version`) === null) {
     fail(`${tool} no está en el PATH. Ver el runbook en README.md.`);
   }
@@ -140,6 +144,50 @@ if (PLATFORM) {
   process.exit(0);
 }
 
+// --- modo --web ---------------------------------------------------------------------
+if (WEB) {
+  if (!platformStateExists()) fail('infra/platform no está aplicado todavía: node scripts/deploy.mjs --platform');
+
+  log('infra/web');
+  init('web');
+  terraform('web', PLAN_ONLY ? 'plan' : `apply ${APPROVE}`);
+  if (PLAN_ONLY) process.exit(0);
+
+  const out = (root, name) => capture(`terraform -chdir="${INFRA[root]}" output -raw ${name}`);
+  const bucket = out('web', 'site_bucket');
+  const distribution = out('web', 'cloudfront_distribution_id');
+  const siteUrl = out('web', 'site_url');
+
+  init('api');
+  const apiUrl = out('api', 'api_endpoint');
+  if (!bucket || !distribution || !apiUrl) fail('faltan outputs de infra/web o infra/api (¿está desplegado el API?)');
+
+  // La URL del API se fija en el build: Vite la incrusta en el JavaScript.
+  log(`Build de la web con VITE_API_URL=${apiUrl}`);
+  run('npm ci', { cwd: WEB_APP });
+  run('npm run build', { cwd: WEB_APP, env: { ...process.env, VITE_API_URL: apiUrl } });
+
+  // Los assets llevan hash en el nombre: caché larga. index.html no, para que
+  // un despliegue se vea en cuanto termina la invalidación.
+  log(`Subiendo a s3://${bucket}`);
+  const dist = path.join(WEB_APP, 'dist');
+  run(`aws s3 sync "${dist}" s3://${bucket} --delete --exclude index.html --cache-control "public,max-age=31536000,immutable"`);
+  run(`aws s3 cp "${path.join(dist, 'index.html')}" s3://${bucket}/index.html --cache-control "no-cache"`);
+  run(`aws cloudfront create-invalidation --distribution-id ${distribution} --paths "/index.html" --output text --query Invalidation.Id`);
+
+  init('platform');
+  const origins = capture(`terraform -chdir="${INFRA.platform}" output -json cors_allowed_origins`) ?? '[]';
+  log(`Web publicada: ${siteUrl}`);
+  if (!JSON.parse(origins).includes(siteUrl)) {
+    console.warn(
+      `\n  ⚠ ${siteUrl} no está en cors_allowed_origins: el navegador no podrá llamar al API.\n` +
+        '    Añádelo en infra/platform/terraform.tfvars y ejecuta:\n' +
+        '      node scripts/deploy.mjs --platform && node scripts/deploy.mjs --no-build'
+    );
+  }
+  process.exit(0);
+}
+
 // --- despliegue del API ----------------------------------------------------------------
 if (!stateBucketExists() || !platformStateExists()) {
   fail(
@@ -148,86 +196,27 @@ if (!stateBucketExists() || !platformStateExists()) {
   );
 }
 
-if (capture('docker info') === null && !SKIP_BUILD) {
-  fail('Docker está instalado pero el engine no responde. Arranca Docker Desktop.');
-}
+// --- 2. paquete de la Lambda ---------------------------------------------------
+// .build/lambda/ = lo que corre en Lambda: package.json + src/ + dependencias
+// de producción. Terraform (archive_file) lo comprime y lo sube; si nada
+// cambió, el hash es el mismo y la función no se toca.
+const BUILD_DIR = path.join(ROOT, '.build', 'lambda');
 
-// --- 2. tag de la imagen ------------------------------------------------------
-function imageTag() {
-  const sha = capture('git rev-parse --short=12 HEAD');
-  if (sha) {
-    const dirty = capture('git status --porcelain');
-    if (dirty) {
-      console.warn('  ⚠ hay cambios sin commit: la imagen no corresponderá a ningún commit exacto');
-      return `${sha}-dirty-${Date.now()}`;
-    }
-    return sha;
-  }
-  // Sin git: marca de tiempo, que es lo único que garantiza un tag nuevo (el
-  // repositorio de ECR es IMMUTABLE y rechaza reutilizar uno).
-  return new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+if (SKIP_BUILD) {
+  if (!existsSync(BUILD_DIR)) fail('--no-build necesita un build previo (no existe .build/lambda)');
+  log('Sin build: se aplica el último paquete de .build/lambda');
+} else {
+  log('Paquete de la Lambda (.build/lambda)');
+  rmSync(BUILD_DIR, { recursive: true, force: true });
+  mkdirSync(BUILD_DIR, { recursive: true });
+  for (const f of ['package.json', 'package-lock.json']) cpSync(path.join(ROOT, f), path.join(BUILD_DIR, f));
+  cpSync(path.join(ROOT, 'src'), path.join(BUILD_DIR, 'src'), { recursive: true });
+  // Solo dependencias de producción, exactamente las del lockfile.
+  run('npm ci --omit=dev --no-audit --no-fund', { cwd: BUILD_DIR });
 }
-
-const registry = `${account}.dkr.ecr.${region}.amazonaws.com`;
-const repoUrl = `${registry}/${REPO_NAME}`;
-const tfvarsPath = path.join(INFRA.api, 'image.auto.tfvars');
 
 log('infra/api init');
 init('api');
-
-if (SKIP_BUILD) {
-  if (!existsSync(tfvarsPath)) fail('--no-build necesita un despliegue previo (no existe infra/api/image.auto.tfvars)');
-  log('Sin build: se aplica la última imagen registrada en image.auto.tfvars');
-} else {
-  const tag = imageTag();
-  log(`Imagen: ${repoUrl}:${tag}`);
-
-  // --- 3. repositorio ----------------------------------------------------------
-  // No se puede subir a un repositorio que no existe, y no se puede crear una
-  // Lambda desde una imagen que no está subida: de ahí el apply parcial la
-  // primera vez.
-  const repoExists = capture(`aws ecr describe-repositories --repository-names ${REPO_NAME} --region ${region}`) !== null;
-  if (!repoExists) {
-    log('El repositorio de ECR no existe todavía: apply parcial para crearlo');
-    terraform('api', `apply -target=aws_ecr_repository.api -var="api_image_tag=${tag}" ${APPROVE}`);
-  }
-
-  // --- 4. build + push ----------------------------------------------------------
-  log('Login en ECR');
-  const password = capture(`aws ecr get-login-password --region ${region}`);
-  if (!password) fail('aws ecr get-login-password falló');
-  // Un solo string: con shell:true, pasar args por separado dispara el aviso
-  // DEP0190 de Node (los concatena sin escapar de todas formas).
-  const login = spawnSync(`docker login --username AWS --password-stdin ${registry}`, {
-    input: password,
-    stdio: ['pipe', 'inherit', 'inherit'],
-    shell: true,
-  });
-  if (login.status !== 0) fail('docker login falló');
-
-  log('docker build (target lambda, linux/amd64, sin atestaciones)');
-  // --platform explícito: Lambda corre x86_64 y una imagen arm64 —lo que sale
-  // por defecto en un Mac con Apple Silicon— falla en el arranque.
-  //
-  // --provenance=false --sbom=false: BuildKit adjunta por defecto un manifiesto
-  // de atestación y convierte el push en un OCI *image index* (una lista de
-  // manifiestos). Lambda solo acepta un manifiesto de imagen único y rechaza
-  // el índice con "image manifest, config or layer media type ... is not
-  // supported". Sin atestaciones, lo que se sube es la imagen a secas.
-  run(
-    `docker build --platform linux/amd64 --provenance=false --sbom=false --target lambda -t "${repoUrl}:${tag}" .`
-  );
-
-  log('docker push');
-  run(`docker push "${repoUrl}:${tag}"`);
-
-  // --- 5. registrar el tag ------------------------------------------------------
-  writeFileSync(
-    tfvarsPath,
-    `# Escrito por scripts/deploy.mjs. Terraform lo carga automáticamente.\napi_image_tag = "${tag}"\n`
-  );
-  console.log(`  infra/api/image.auto.tfvars → api_image_tag = "${tag}"`);
-}
 
 // --- 6. terraform ---------------------------------------------------------------
 if (PLAN_ONLY) {

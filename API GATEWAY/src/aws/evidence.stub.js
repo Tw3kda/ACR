@@ -25,7 +25,7 @@ export function canonicalJson(value) {
 
 export const sha256Hex = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
-const { eventsPrefix, indexPrefix } = config.evidence;
+const { eventsPrefix, indexPrefix, accessPrefix } = config.evidence;
 const bucket = config.evidence.bucket || 'stub-consent-evidence';
 
 export const eventKey = (consentId, seq, type) =>
@@ -70,6 +70,71 @@ export async function listPointers(prefix, { limit = 100 } = {}) {
     .slice(0, limit)
     .map((k) => k.slice(indexPrefix.length + 1));
   return { keys, nextToken: null };
+}
+
+export async function putAccessRecord({ patientId, name, record }) {
+  const key = `${accessPrefix}/${patientId}/${name}.json`;
+  const body = Buffer.from(canonicalJson(record), 'utf8');
+
+  traceAws({
+    service: 'S3',
+    operation: 'PutObject',
+    note: 'registro de acceso de la web de consulta',
+    input: { Bucket: bucket, Key: key, IfNoneMatch: '*', Body: record },
+  });
+
+  objects.set(key, body);
+  return { key, sha256: sha256Hex(body) };
+}
+
+export async function listAccessRecords(patientId, { limit = 200 } = {}) {
+  const prefix = `${accessPrefix}/${patientId}/`;
+  return [...objects.keys()]
+    .filter((k) => k.startsWith(prefix))
+    .sort()
+    .slice(-limit)
+    .map((k) => JSON.parse(objects.get(k).toString('utf8')));
+}
+
+export async function putJsonOnce(key, value) {
+  const body = Buffer.from(canonicalJson(value), 'utf8');
+  const created = !objects.has(key);
+  traceAws({
+    service: 'S3',
+    operation: 'PutObject',
+    note: created ? 'objeto nuevo (queda bajo Object Lock)' : 'la clave ya existe (412)',
+    input: { Bucket: bucket, Key: key, IfNoneMatch: '*' },
+  });
+  if (!created) return { created: false, key, existing: await getJson(key) };
+  objects.set(key, body);
+  return { created: true, key, sha256: sha256Hex(body) };
+}
+
+export async function getJson(key) {
+  const bytes = objects.get(key);
+  if (!bytes) return null;
+  return { value: JSON.parse(bytes.toString('utf8')), sha256: sha256Hex(bytes) };
+}
+
+export async function listKeys(prefix) {
+  return [...objects.keys()].filter((k) => k.startsWith(prefix)).sort();
+}
+
+export async function listPatientIds() {
+  const prefix = `${indexPrefix}/patient/`;
+  const ids = [...objects.keys()].filter((k) => k.startsWith(prefix)).map((k) => k.slice(prefix.length).split('/')[0]);
+  return [...new Set(ids)].sort();
+}
+
+export async function listEvents(consentId) {
+  const prefix = `${eventsPrefix}/${consentId}/`;
+  return [...objects.keys()]
+    .filter((k) => k.startsWith(prefix))
+    .sort()
+    .map((key) => {
+      const bytes = objects.get(key);
+      return { key, event: JSON.parse(bytes.toString('utf8')), sha256: sha256Hex(bytes) };
+    });
 }
 
 /** Solo para las pruebas de humo. */

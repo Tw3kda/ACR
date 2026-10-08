@@ -48,6 +48,9 @@ function issueToken(user, tokenUse, ttlSeconds) {
     iss: `https://stub.local/${config.cognito.userPoolId || 'stub-pool'}`,
     client_id: config.cognito.clientId || 'stub-client',
     scope: 'aws.cognito.signin.user.admin',
+    // El usuario semilla pertenece al grupo de la web de consulta. El authorizer
+    // real entrega esta claim como cadena "[auditores]"; requireGroup acepta las dos.
+    'cognito:groups': ['auditores'],
     iat: now,
     exp: now + ttlSeconds,
     jti: crypto.randomUUID(),

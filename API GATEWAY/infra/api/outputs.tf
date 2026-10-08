@@ -26,9 +26,15 @@ locals {
 
     # --- S3: registro de auditoría ---
     # Los drivers pasan solos a `aws` en cuanto estos identificadores existen.
-    EVIDENCE_BUCKET        = local.platform.evidence_bucket
-    EVIDENCE_EVENTS_PREFIX = "events"
-    EVIDENCE_INDEX_PREFIX  = "index"
+    EVIDENCE_BUCKET           = local.platform.evidence_bucket
+    EVIDENCE_EVENTS_PREFIX    = "events"
+    EVIDENCE_INDEX_PREFIX     = "index"
+    EVIDENCE_ACCESS_PREFIX    = "access"
+    EVIDENCE_TEMPLATES_PREFIX = "templates"
+
+    # --- Web de consulta ---
+    AUTH_READER_GROUP            = "auditores"
+    PDF_DOWNLOAD_URL_TTL_SECONDS = "60"
 
     # --- S3: PDFs ---
     PDF_BUCKET     = local.platform.pdf_bucket

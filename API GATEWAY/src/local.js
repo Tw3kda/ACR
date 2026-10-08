@@ -9,6 +9,14 @@ import logger from './lib/logger.js';
 
 const app = createApp();
 
+// Sin AWS detrás no hay nada que consultar: se siembran consentimientos de
+// ejemplo para la web de consulta (WEB PDF CHECK/).
+const stubs = stubbedDrivers();
+if (config.stub.seedConsents && stubs.includes('evidence') && stubs.includes('s3')) {
+  const { seedStubConsents } = await import('./dev/seedStub.js');
+  await seedStubConsents();
+}
+
 const server = app.listen(config.http.port, () => {
   logger.info('API escuchando', {
     port: config.http.port,

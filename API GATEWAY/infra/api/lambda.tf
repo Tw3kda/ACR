@@ -1,33 +1,25 @@
 # =============================================================================
-# La función del API, desplegada como imagen de contenedor.
+# La función del API, desplegada como .zip en el runtime gestionado nodejs22.x.
 #
-# El `--target lambda` del Dockerfile parte de `public.ecr.aws/lambda/nodejs:22`
-# y copia `src/` entero; el handler que arranca es `src/handlers/api.handler`.
+# El código es Node puro (sin binarios nativos), así que no hace falta una
+# imagen de contenedor: sin ECR, sin Docker, y despliegues de segundos.
 #
-# El ciclo de despliegue es:
+#   scripts/deploy.mjs  →  .build/lambda/ (package.json + src + npm ci --omit=dev)
+#                       →  terraform apply (archive_file lo comprime y lo sube)
 #
-#   docker build --target lambda  →  docker push a ECR  →  terraform apply
-#
-# `scripts/deploy.mjs` hace los tres pasos y deja el tag de la imagen en
-# `infra/api/image.auto.tfvars`, que Terraform carga solo. Así `terraform apply` a
-# secas siempre despliega la última imagen subida, y el estado nunca discrepa
-# de lo que corre.
-#
-# Las variables de entorno de la función **pisan** las `ENV` de la imagen. Es
-# importante aquí: el Dockerfile deja ALLOW_STUB_IN_PRODUCTION=true y
-# TRACE_IO=true para poder probar el handler en local sin AWS detrás, y
-# outputs.tf las pone a false. Gana outputs.tf. Sin eso, un despliegue con un
-# adaptador mal configurado arrancaría en modo simulado sin quejarse.
+# El handler es el mismo de siempre: `src/handlers/api.handler`. La
+# configuración llega entera por variables de entorno (outputs.tf).
 # =============================================================================
 
-variable "api_image_tag" {
-  description = <<-EOT
-    Tag de la imagen en ECR que corre en ambas funciones. Lo escribe
-    scripts/deploy.mjs en image.auto.tfvars tras cada push; no hace falta
-    pasarlo a mano. Sin valor, `plan` lo pregunta — es lo esperado antes del
-    primer despliegue.
-  EOT
-  type        = string
+locals {
+  # Lo prepara scripts/deploy.mjs antes de cada plan/apply.
+  lambda_build_dir = "${path.module}/../../.build/lambda"
+}
+
+data "archive_file" "api" {
+  type        = "zip"
+  source_dir  = local.lambda_build_dir
+  output_path = "${path.module}/../../.build/lambda.zip"
 }
 
 variable "api_reserved_concurrency" {
@@ -52,11 +44,10 @@ variable "lambda_log_retention_days" {
 }
 
 # -----------------------------------------------------------------------------
-# Registro de imágenes
+# Registro de imágenes — YA NO SE USA (la función es .zip desde 2026-10).
+# Se conserva hasta confirmar el despliegue por zip; después se elimina este
+# bloque, la lifecycle policy y el output ecr_repository_url.
 # -----------------------------------------------------------------------------
-# Sin prefijo de entorno a propósito: una imagen no sabe en qué entorno corre
-# (toda su configuración llega por variables de la función), así que dev y prod
-# comparten repositorio y la misma imagen se promociona de uno a otro.
 resource "aws_ecr_repository" "api" {
   name = "acr-consent-api"
 
@@ -89,10 +80,6 @@ resource "aws_ecr_lifecycle_policy" "api" {
       action = { type = "expire" }
     }]
   })
-}
-
-locals {
-  image_uri = "${aws_ecr_repository.api.repository_url}:${var.api_image_tag}"
 }
 
 # -----------------------------------------------------------------------------
@@ -144,11 +131,13 @@ resource "aws_cloudwatch_log_group" "express_app" {
 resource "aws_lambda_function" "express_app" {
   function_name = "${local.name_prefix}medical-consent-api"
   role          = aws_iam_role.express_app.arn
-  package_type  = "Image"
-  image_uri     = local.image_uri
+  package_type  = "Zip"
+  runtime       = "nodejs22.x"
+  handler       = "src/handlers/api.handler"
 
-  # Tiene que coincidir con el `--platform` del docker build. Una imagen arm64
-  # aquí falla en el arranque con "exec format error" y nada más.
+  filename         = data.archive_file.api.output_path
+  source_code_hash = data.archive_file.api.output_base64sha256
+
   architectures = ["x86_64"]
 
   # 10 s es también el timeout de la integración en api_gateway.tf: si esto
@@ -158,10 +147,6 @@ resource "aws_lambda_function" "express_app" {
   memory_size = 512
 
   reserved_concurrent_executions = var.api_reserved_concurrency
-
-  image_config {
-    command = ["src/handlers/api.handler"]
-  }
 
   environment {
     variables = local.lambda_environment

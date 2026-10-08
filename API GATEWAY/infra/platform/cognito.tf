@@ -120,6 +120,20 @@ resource "aws_cognito_user_pool_client" "client" {
   supported_identity_providers = ["COGNITO"]
 }
 
+# Quién puede usar la web de consulta (WEB PDF CHECK/). La Lambda exige esta
+# claim en /audit/search y /consents/*/pdf-download-url (AUTH_READER_GROUP). Un
+# profesional de tablet no pertenece al grupo y recibe 403.
+#
+#   aws cognito-idp admin-add-user-to-group #     --user-pool-id <pool> --username <correo> --group-name auditores
+resource "aws_cognito_user_group" "auditores" {
+  count = var.localstack ? 0 : 1
+
+  name         = "auditores"
+  user_pool_id = aws_cognito_user_pool.pool[0].id
+  description  = "Consulta y descarga de consentimientos desde la web"
+  precedence   = 10
+}
+
 # `one()` devuelve null cuando count = 0 (LocalStack), en vez de romper el plan.
 output "cognito_user_pool_id" {
   description = "Valor de COGNITO_USER_POOL_ID. null en LocalStack."

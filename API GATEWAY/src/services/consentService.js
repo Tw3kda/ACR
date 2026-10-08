@@ -6,6 +6,7 @@ import { badRequest, conflict, payloadTooLarge } from '../lib/errors.js';
 import { isHex64, isSafeId, requireObject } from '../lib/validate.js';
 import logger from '../lib/logger.js';
 import { EVENT_SCHEMA, buildSignedEvent, writePointers } from './auditService.js';
+import { resolveTemplateRef } from './templateService.js';
 
 /**
  * `POST /consents`: el consentimiento firmado entra entero, en una llamada —
@@ -26,6 +27,9 @@ import { EVENT_SCHEMA, buildSignedEvent, writePointers } from './auditService.js
  */
 
 const PDF_MAGIC = '%PDF-';
+
+/** Aceptado o rechazado: en ambos casos el paciente firmó un documento. */
+export const SIGNED_TYPES = new Set(['CONSENT_SIGNED', 'CONSENT_DECLINED']);
 
 /** hex -> base64: lo que S3 espera en `ChecksumSHA256`. */
 export const hexToBase64 = (hex) => Buffer.from(hex, 'hex').toString('base64');
@@ -81,8 +85,10 @@ export async function submitConsent(body, { sourceIp, operatorId, receivedAtIso,
   requireObject(body, 'body');
   const log = requireObject(body.log, 'log');
 
-  if (log.event_type !== 'CONSENT_SIGNED') {
-    throw badRequest('POST /consents solo registra firmas (event_type CONSENT_SIGNED)', {
+  // Una firma de aceptación o de rechazo: las dos son un documento firmado por
+  // el paciente, con su PDF, y se registran igual. Cambia solo el tipo.
+  if (!SIGNED_TYPES.has(log.event_type)) {
+    throw badRequest('POST /consents solo registra consentimientos firmados (CONSENT_SIGNED o CONSENT_DECLINED)', {
       details: { field: 'log.event_type', value: log.event_type },
     });
   }
@@ -107,10 +113,17 @@ export async function submitConsent(body, { sourceIp, operatorId, receivedAtIso,
   }
 
   const key = buildPdfKey(log.consent_id, log.timestamp_utc);
+  // Qué plantilla dice la tablet que firmó el paciente, comprobado contra lo
+  // publicado: queda en el evento el SHA-256 de la plantilla guardada, así el
+  // texto firmado se puede reconstruir aunque el PDF ya no exista.
+  const templateRef = await resolveTemplateRef(log.template);
   const { consentId, points, payload, event } = buildSignedEvent(
     log,
     { sourceIp, operatorId, receivedAtIso },
-    { captureMetadata: { pdf_s3_bucket: config.s3.bucket, pdf_s3_key: key } },
+    {
+      captureMetadata: { pdf_s3_bucket: config.s3.bucket, pdf_s3_key: key },
+      payload: { template_ref: templateRef },
+    },
   );
 
   // --- 1. el PDF -----------------------------------------------------------------
@@ -125,7 +138,7 @@ export async function submitConsent(body, { sourceIp, operatorId, receivedAtIso,
   }
 
   // --- 2. el evento de la firma ---------------------------------------------------
-  const signed = await evidence.putEventOnce({ consentId, seq: 1, type: 'CONSENT_SIGNED', event });
+  const signed = await evidence.putEventOnce({ consentId, seq: 1, type: log.event_type, event });
   let duplicate = false;
   if (!signed.created) {
     const existingLogId = signed.existing?.event?.payload?.log_id ?? null;

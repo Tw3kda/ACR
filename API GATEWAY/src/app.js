@@ -9,6 +9,8 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import consentsRoutes from './routes/consents.routes.js';
+import templatesRoutes from './routes/templates.routes.js';
+import { s3 } from './aws/index.js';
 
 export function createApp() {
   const app = express();
@@ -55,9 +57,24 @@ export function createApp() {
     });
   });
 
+  // Con S3 simulado, la "URL firmada" del PDF apunta aquí (ver s3.stub.js).
+  // No existe con el adaptador real ni en producción.
+  if (s3.driver === 'stub' && !config.isProduction) {
+    app.get('/__stub/s3/object', async (req, res) => {
+      const { key, disposition, expires } = req.query;
+      if (!key || Number(expires) < Date.now()) return res.status(403).send('Request has expired');
+      const bytes = await s3.getPdfBytes(String(key));
+      if (!bytes) return res.status(404).send('NoSuchKey');
+      res.setHeader('Content-Type', 'application/pdf');
+      if (disposition) res.setHeader('Content-Disposition', String(disposition));
+      return res.send(bytes);
+    });
+  }
+
   app.use(authRoutes);
   app.use(auditRoutes);
   app.use(consentsRoutes);
+  app.use(templatesRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

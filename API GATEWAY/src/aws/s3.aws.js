@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand, GetObjectAttributesCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, GetObjectAttributesCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import config from '../config/env.js';
 
@@ -64,4 +65,31 @@ export async function getObjectAttributes({ bucket, key }) {
     checksumBase64: res.Checksum?.ChecksumSHA256 ?? null,
     sizeBytes: res.ObjectSize ?? null,
   };
+}
+
+/**
+ * URL firmada de lectura para la web de consulta. Los bytes van de S3 al
+ * navegador sin pasar por Lambda (límite de 6 MB) y sin necesitar CORS: el
+ * navegador *navega* a la URL, no hace fetch.
+ *
+ * `inline` abre el PDF en el visor del navegador; sin él, S3 responde con
+ * `Content-Disposition: attachment` y el navegador descarga.
+ *
+ * El permiso se evalúa contra quien firma (el rol de la Lambda): s3:GetObject
+ * sobre la clave (y kms:Decrypt si el bucket usa una CMK).
+ */
+export async function presignPdfGet({ bucket, key, filename, inline = false }) {
+  const expiresIn = config.s3.downloadUrlTtlSeconds;
+  const safeName = String(filename).replace(/[^A-Za-z0-9._-]/g, '_');
+  const url = await getSignedUrl(
+    getClient(),
+    new GetObjectCommand({
+      Bucket: bucket ?? config.s3.bucket,
+      Key: key,
+      ResponseContentType: 'application/pdf',
+      ResponseContentDisposition: `${inline ? 'inline' : 'attachment'}; filename="${safeName}"`,
+    }),
+    { expiresIn },
+  );
+  return { url, expiresIn, filename: safeName };
 }

@@ -3,6 +3,7 @@ import serverlessExpress from 'serverless-http';
 import config, { assertDeployable } from '../config/env.js';
 import { createApp } from '../app.js';
 import logger from '../lib/logger.js';
+import { handleAdmin, isAdminEvent } from './admin.js';
 
 // Todo lo caro ocurre en el arranque en frío y se reutiliza entre invocaciones:
 // la app de Express, los clientes del SDK y la resolución de credenciales.
@@ -44,6 +45,9 @@ export const handler = async (event, context) => {
   // Sin esto, Lambda espera a que se vacíe el event loop y añade latencia (y a
   // veces cuelga) en cuanto un cliente del SDK deja un socket abierto.
   context.callbackWaitsForEmptyEventLoop = false;
+
+  // Invocación directa con IAM (scripts/publish-template.mjs), no HTTP.
+  if (isAdminEvent(event)) return handleAdmin(event);
 
   try {
     return await handle(stripStagePrefix(event), context);

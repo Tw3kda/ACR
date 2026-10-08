@@ -17,6 +17,10 @@ data "aws_iam_policy_document" "api" {
     resources = [
       "${local.platform.evidence_bucket_arn}/events/*",
       "${local.platform.evidence_bucket_arn}/index/*",
+      # Registro de accesos de la web de consulta (quién buscó / descargó).
+      "${local.platform.evidence_bucket_arn}/access/*",
+      # Plantillas de consentimiento y fotos del catálogo (publish-template.mjs).
+      "${local.platform.evidence_bucket_arn}/templates/*",
     ]
   }
 

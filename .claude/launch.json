@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["API GATEWAY/src/local.js"],
+      "port": 3000
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["WEB PDF CHECK/my-app/node_modules/vite/bin/vite.js", "WEB PDF CHECK/my-app", "--port", "5173", "--strictPort"],
+      "port": 5173
+    }
+  ]
+}

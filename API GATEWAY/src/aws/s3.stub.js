@@ -55,5 +55,38 @@ export async function getObjectAttributes({ bucket: b, key }) {
   return output;
 }
 
+/**
+ * No hay S3 detrás: la "URL firmada" apunta a este mismo proceso, a una ruta
+ * que solo existe con el adaptador simulado (ver app.js). Así la web de
+ * consulta puede abrir y descargar PDFs en local igual que en AWS.
+ */
+export async function presignPdfGet({ bucket: b, key, filename, inline = false }) {
+  const expiresIn = config.s3.downloadUrlTtlSeconds;
+  const safeName = String(filename).replace(/[^A-Za-z0-9._-]/g, '_');
+  const disposition = `${inline ? 'inline' : 'attachment'}; filename="${safeName}"`;
+
+  traceAws({
+    service: 'S3',
+    operation: 'getSignedUrl(GetObjectCommand)',
+    note: `caduca en ${expiresIn} s`,
+    input: { Bucket: b ?? bucket(), Key: key, ResponseContentDisposition: disposition },
+  });
+
+  const params = new URLSearchParams({
+    key,
+    disposition,
+    expires: String(Date.now() + expiresIn * 1000),
+  });
+  return {
+    url: `http://localhost:${config.http.port}/__stub/s3/object?${params}`,
+    expiresIn,
+    filename: safeName,
+  };
+}
+
+export async function getPdfBytes(key) {
+  return objects.get(key)?.body ?? null;
+}
+
 /** Solo para las pruebas de humo. */
 export const __store = objects;

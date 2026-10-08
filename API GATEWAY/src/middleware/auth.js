@@ -1,5 +1,5 @@
 import config from '../config/env.js';
-import { unauthorized } from '../lib/errors.js';
+import { forbidden, unauthorized } from '../lib/errors.js';
 import { bearerFrom, decodeJwtPayload, isExpired } from '../lib/jwt.js';
 
 const TOKEN_INVALIDO = 'La sesión expiró, vuelva a iniciar sesión';
@@ -54,6 +54,32 @@ export function requireAuth(req, res, next) {
   req.log?.debug('claims tomadas del Bearer sin verificar firma (modo local)');
   return next();
 }
+
+/**
+ * El JWT authorizer de un HTTP API entrega las claims de tipo lista como
+ * cadena: `cognito:groups` llega como "[auditores]" (o "[a b]" con varios), no
+ * como arreglo. En modo local (Bearer decodificado) sí es un arreglo.
+ */
+export function groupsFrom(claims) {
+  const raw = claims?.['cognito:groups'];
+  if (Array.isArray(raw)) return raw.map(String);
+  if (typeof raw === 'string') return raw.replace(/^\[|\]$/g, '').split(/[\s,]+/).filter(Boolean);
+  return [];
+}
+
+/**
+ * Exige pertenencia a un grupo de Cognito. Va SIEMPRE después de requireAuth.
+ * Responde 403 y no 401: el token es válido, lo que faltan son permisos, y un
+ * 401 haría que el cliente renovase la sesión y reintentase inútilmente.
+ */
+export const requireGroup = (group) => (req, res, next) => {
+  const groups = groupsFrom(req.ctx?.claims);
+  req.ctx.groups = groups;
+  if (!group || groups.includes(group)) return next();
+  return next(
+    forbidden('No tiene permiso para consultar consentimientos', { details: { required_group: group } }),
+  );
+};
 
 /**
  * Barrera opcional de x-api-key. La llave real la aplica el plan de uso de API

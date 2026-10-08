@@ -49,7 +49,7 @@ const getClient = () => {
 
 export const driver = 'aws';
 
-const { bucket, eventsPrefix, indexPrefix } = config.evidence;
+const { bucket, eventsPrefix, indexPrefix, accessPrefix } = config.evidence;
 
 /** JSON con las claves ordenadas en todos los niveles: mismo objeto, mismos bytes. */
 export function canonicalJson(value) {
@@ -154,4 +154,131 @@ export async function listPointers(prefix, { limit = 100, continuationToken } = 
     keys: (res.Contents ?? []).map((o) => o.Key.slice(indexPrefix.length + 1)),
     nextToken: res.NextContinuationToken ?? null,
   };
+}
+
+/**
+ * JSON arbitrario bajo una clave, una sola vez (plantillas, catálogo). Mismas
+ * garantías que putEventOnce: bytes canónicos, checksum, If-None-Match.
+ */
+export async function putJsonOnce(key, value) {
+  const body = Buffer.from(canonicalJson(value), 'utf8');
+  try {
+    await getClient().send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: body,
+        ContentType: 'application/json',
+        ChecksumSHA256: sha256Base64(body),
+        IfNoneMatch: '*',
+      }),
+    );
+    return { created: true, key, sha256: sha256Hex(body) };
+  } catch (err) {
+    if (!isPrecondition(err)) throw err;
+    return { created: false, key, existing: await getJson(key) };
+  }
+}
+
+/** `{ value, sha256 }` o null si la clave no existe. */
+export async function getJson(key) {
+  try {
+    const res = await getClient().send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+    const bytes = Buffer.from(await res.Body.transformToByteArray());
+    return { value: JSON.parse(bytes.toString('utf8')), sha256: sha256Hex(bytes) };
+  } catch (err) {
+    if (isNoSuchKey(err)) return null;
+    throw err;
+  }
+}
+
+/** Todas las claves bajo un prefijo, en orden lexicográfico. */
+export async function listKeys(prefix) {
+  const keys = [];
+  let token;
+  do {
+    const res = await getClient().send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: token }),
+    );
+    keys.push(...(res.Contents ?? []).map((o) => o.Key));
+    token = res.NextContinuationToken;
+  } while (token);
+  return keys.sort();
+}
+
+/**
+ * Las cédulas del índice (`index/patient/<cédula>/`), sin leer ningún objeto:
+ * con Delimiter, S3 devuelve cada "carpeta" una sola vez.
+ */
+export async function listPatientIds() {
+  const prefix = `${indexPrefix}/patient/`;
+  const ids = [];
+  let token;
+  do {
+    const res = await getClient().send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, Delimiter: '/', ContinuationToken: token }),
+    );
+    ids.push(...(res.CommonPrefixes ?? []).map((p) => p.Prefix.slice(prefix.length, -1)));
+    token = res.NextContinuationToken;
+  } while (token);
+  return ids;
+}
+
+/** Todos los eventos de un consentimiento, en orden (0001, 0002, …), con el hash de sus bytes. */
+export async function listEvents(consentId) {
+  const res = await getClient().send(
+    new ListObjectsV2Command({ Bucket: bucket, Prefix: `${eventsPrefix}/${consentId}/` }),
+  );
+  const keys = (res.Contents ?? []).map((o) => o.Key).sort();
+  return Promise.all(
+    keys.map(async (key) => {
+      const obj = await getClient().send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+      const bytes = Buffer.from(await obj.Body.transformToByteArray());
+      return { key, event: JSON.parse(bytes.toString('utf8')), sha256: sha256Hex(bytes) };
+    }),
+  );
+}
+
+/**
+ * Registro de acceso de la web de consulta (quién buscó o descargó qué), un
+ * objeto por acceso bajo `access/<cédula>/`. Mismo bucket y mismo Object Lock
+ * que los eventos: el rastro de lecturas es tan inmutable como el de firmas.
+ */
+export async function putAccessRecord({ patientId, name, record }) {
+  const key = `${accessPrefix}/${patientId}/${name}.json`;
+  const body = Buffer.from(canonicalJson(record), 'utf8');
+  await getClient().send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+      ContentType: 'application/json',
+      ChecksumSHA256: sha256Base64(body),
+      IfNoneMatch: '*',
+    }),
+  );
+  return { key, sha256: sha256Hex(body) };
+}
+
+/** Los registros de acceso de un paciente, del más antiguo al más reciente. */
+export async function listAccessRecords(patientId, { limit = 200 } = {}) {
+  const prefix = `${accessPrefix}/${patientId}/`;
+  const keys = [];
+  let token;
+  do {
+    const res = await getClient().send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: token }),
+    );
+    keys.push(...(res.Contents ?? []).map((o) => o.Key));
+    token = res.NextContinuationToken;
+  } while (token);
+
+  // Los más recientes: son los que interesan y la clave empieza por la fecha.
+  const recent = keys.sort().slice(-limit);
+  return Promise.all(
+    recent.map(async (key) => {
+      const res = await getClient().send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+      return JSON.parse(Buffer.from(await res.Body.transformToByteArray()).toString('utf8'));
+    }),
+  );
 }

@@ -10,6 +10,7 @@ import {
   requireObject,
 } from '../lib/validate.js';
 import logger from '../lib/logger.js';
+import { nameSlug } from '../lib/nameKey.js';
 
 /** Versión del sobre que envuelve cada evento. El payload es el log tal como lo define el contrato. */
 export const EVENT_SCHEMA = 'acr.consent.event/1';
@@ -78,16 +79,22 @@ export function validate(body) {
 /** `2026-09-12T06:04:55.448Z` → `2026-09-12T06-04-55Z`: ordenable y válido en una clave. */
 const stampForKey = (iso) => iso.slice(0, 19).replace(/:/g, '-') + 'Z';
 
-/** Los tres punteros del índice. Un fallo aquí no invalida el evento, que ya está escrito. */
+/**
+ * Los punteros del índice. Un fallo aquí no invalida el evento, que ya está escrito.
+ * `name/<cédula>/<nombre>` es uno por paciente y nombre (no por consentimiento):
+ * la búsqueda por nombre lista ese prefijo entero y filtra en memoria.
+ */
 export async function writePointers(payload, consentId) {
   const stamp = stampForKey(payload.timestamp_utc);
   const [y, m, d] = payload.timestamp_utc.slice(0, 10).split('-');
   const clinic = payload.capture_metadata?.clinic_location_id;
+  const slug = nameSlug(payload.subject.full_name);
 
   const keys = [
     `patient/${payload.subject.patient_id}/${stamp}_${consentId}`,
     clinic && isSafeId(clinic) ? `clinic/${clinic}/${stamp}_${consentId}` : null,
     `date/${y}/${m}/${d}/${consentId}`,
+    slug ? `name/${payload.subject.patient_id}/${slug}` : null,
   ].filter(Boolean);
 
   const results = await Promise.allSettled(keys.map((k) => evidence.putPointer(k)));
@@ -129,6 +136,8 @@ export function buildSignedEvent(body, { sourceIp, operatorId, receivedAtIso }, 
     },
     // El reloj del gateway, no el de la tablet.
     received_at_utc: receivedAtIso,
+    // Hechos que solo el servidor puede afirmar (p. ej. template_ref).
+    ...(overrides.payload ?? {}),
   };
 
   const event = {

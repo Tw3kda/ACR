@@ -128,6 +128,13 @@ resource "aws_apigatewayv2_stage" "default" {
     }
   }
 
+  # Una URL firmada por clic: no hace falta más.
+  route_settings {
+    route_key              = "GET /consents/{consent_id}/pdf-download-url"
+    throttling_rate_limit  = 20
+    throttling_burst_limit = 40
+  }
+
   # API Gateway valida al crear el stage que cada route_key de route_settings
   # exista ya. Sin esto, Terraform crea el stage en paralelo con las rutas y el
   # primer apply falla con "Unable to find Route by key ... within the provided
@@ -137,6 +144,7 @@ resource "aws_apigatewayv2_stage" "default" {
     aws_apigatewayv2_route.auth_login,
     aws_apigatewayv2_route.auth_refresh,
     aws_apigatewayv2_route.auth_register,
+    aws_apigatewayv2_route.consent_pdf_download_url,
   ]
 }
 
@@ -184,6 +192,13 @@ resource "aws_lambda_permission" "apigw_permission" {
   function_name = aws_lambda_function.express_app.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/${aws_apigatewayv2_stage.default.name}/*/*"
+
+  # El permiso vive DENTRO de la función: si la función se reemplaza (p. ej.
+  # al cambiar de imagen a zip), el permiso desaparece con ella aunque el
+  # nombre sea el mismo, y el gateway empieza a responder 500. Esto lo recrea.
+  lifecycle {
+    replace_triggered_by = [aws_lambda_function.express_app.arn]
+  }
 }
 
 # -----------------------------------------------------------------------------
@@ -233,6 +248,57 @@ resource "aws_apigatewayv2_route" "audit_logs" {
 resource "aws_apigatewayv2_route" "consents" {
   api_id             = aws_apigatewayv2_api.http_api.id
   route_key          = "POST /consents"
+  target             = local.integracion
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+}
+
+# --- Web de consulta (JWT + grupo `auditores`, comprobado en la Lambda) -------
+resource "aws_apigatewayv2_route" "audit_search" {
+  api_id             = aws_apigatewayv2_api.http_api.id
+  route_key          = "POST /audit/search"
+  target             = local.integracion
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+}
+
+# --- Plantillas de consentimiento (cualquier usuario autenticado: las tablets) --
+# Publicar no tiene ruta: se hace invocando la Lambda con IAM.
+resource "aws_apigatewayv2_route" "templates" {
+  api_id             = aws_apigatewayv2_api.http_api.id
+  route_key          = "GET /templates"
+  target             = local.integracion
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+}
+
+resource "aws_apigatewayv2_route" "template" {
+  api_id             = aws_apigatewayv2_api.http_api.id
+  route_key          = "GET /templates/{code}"
+  target             = local.integracion
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+}
+
+resource "aws_apigatewayv2_route" "patients_today" {
+  api_id             = aws_apigatewayv2_api.http_api.id
+  route_key          = "POST /patients/today"
+  target             = local.integracion
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+}
+
+resource "aws_apigatewayv2_route" "patients_suggest" {
+  api_id             = aws_apigatewayv2_api.http_api.id
+  route_key          = "POST /patients/suggest"
+  target             = local.integracion
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+}
+
+resource "aws_apigatewayv2_route" "consent_pdf_download_url" {
+  api_id             = aws_apigatewayv2_api.http_api.id
+  route_key          = "GET /consents/{consent_id}/pdf-download-url"
   target             = local.integracion
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id

@@ -1,32 +1,44 @@
-# React + TypeScript + Vite
+# Consulta de consentimientos (web)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Web para auditores: iniciar sesión, buscar por número de documento, ver y
+descargar el PDF firmado, y revisar el registro de auditoría y de accesos.
+Habla con el API de `API GATEWAY/` (`/auth/login`, `/auth/refresh`,
+`/audit/search`, `/consents/{id}/pdf-download-url`).
 
-Currently, two official plugins are available:
+## En local (sin AWS)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+# terminal 1 — API con adaptadores simulados y datos de ejemplo
+cd "API GATEWAY" && npm start
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+# terminal 2 — la web
+cd "WEB PDF CHECK/my-app" && npm install && npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Abrir http://localhost:5173 con `demo@acrvitallaboral.com` / `Demo1234!`.
+Cédulas de ejemplo: `1018293847` (2 consentimientos) y `79845123`.
+
+## Producción (AWS)
+
+Publicada en https://d1ndwczenqtc0d.cloudfront.net (S3 privado + CloudFront,
+`API GATEWAY/infra/web`). Para publicar cambios de la web:
+
+```bash
+cd "API GATEWAY" && node scripts/deploy.mjs --web
+```
+
+Aplica `infra/web`, compila con `VITE_API_URL` = el `api_endpoint` de
+`infra/api`, sube `dist/` e invalida `index.html`.
+
+- El usuario debe estar en el grupo de Cognito `auditores` (si no, 403):
+  `aws cognito-idp admin-add-user-to-group --user-pool-id <pool> --username <usuario> --group-name auditores`
+  y volver a iniciar sesión.
+- El dominio de la web está en `infra/platform/terraform.tfvars`
+  (`cors_allowed_origins`); si cambia, `deploy.mjs --platform` y luego
+  `deploy.mjs --no-build`.
+
+## Qué queda registrado
+
+Cada búsqueda y cada PDF visto o descargado escribe un registro inmutable en
+el bucket de evidencia (`access/<cédula>/…`) antes de responder. Se ven en la
+pestaña **Registro de accesos**.

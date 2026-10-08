@@ -14,6 +14,7 @@ import crypto from 'node:crypto';
 process.env.NODE_ENV ??= 'development';
 process.env.LOG_LEVEL ??= 'warn';
 process.env.REGISTRATION_ENABLED ??= 'true';
+process.env.AUTH_READER_GROUP ??= 'auditores';
 
 const { handler: api } = await import('../src/handlers/api.js');
 
@@ -39,12 +40,13 @@ function check(name, condition, extra) {
   if (!condition) failures += 1;
 }
 
-function event(method, path, body, { claims = null, headers = {} } = {}) {
+function event(method, pathAndQuery, body, { claims = null, headers = {} } = {}) {
+  const [path, query = ''] = pathAndQuery.split('?');
   return {
     version: '2.0',
     routeKey: `${method} ${path}`,
     rawPath: path,
-    rawQueryString: '',
+    rawQueryString: query,
     headers: { 'content-type': 'application/json', ...headers },
     body: body === undefined ? undefined : JSON.stringify(body),
     isBase64Encoded: false,
@@ -258,7 +260,159 @@ const colisionPdf = await call('POST', '/consents', consentBody(
 check('otro PDF bajo el mismo consent_id -> 409 pdf_conflict',
   colisionPdf.status === 409 && colisionPdf.body.code === 'pdf_conflict', colisionPdf.body);
 
-// --- 7. varios --------------------------------------------------------------
+// --- 7. web de consulta: búsqueda, PDF, registro de accesos ---------------------------
+const auditor = { ...claims, 'cognito:groups': '[auditores]' }; // como lo entrega el gateway
+const sinGrupo = { ...claims, 'cognito:groups': '[profesionales]' };
+
+let r = await call('POST', '/audit/search', { patient_id: PATIENT_ID }, { claims: auditor });
+check('search: 200 con el consentimiento', r.status === 200 && r.body.items?.length === 1 && r.body.items[0].consent_id === CONSENT_ID, r.body);
+check('search: sin biometrics_json', r.body.items?.[0]?.log && r.body.items[0].log.biometrics_json === undefined);
+check('search: pdf verificado y cadena de 2 eventos', r.body.items?.[0]?.pdf?.verified === true && r.body.items[0].events?.length === 2, r.body.items?.[0]);
+
+r = await call('POST', '/audit/search', { patient_id: PATIENT_ID }, { claims: sinGrupo });
+check('search: 403 sin grupo (no 401)', r.status === 403, r.body);
+r = await call('POST', '/audit/search', { patient_id: '12/../x' }, { claims: auditor });
+check('search: 400 cédula inválida', r.status === 400, r.body);
+r = await call('POST', '/audit/search', { patient_id: '99999999' }, { claims: auditor });
+check('search: cédula sin registros -> 200 vacío', r.status === 200 && r.body.items.length === 0, r.body);
+
+r = await call('GET', `/consents/${CONSENT_ID}/pdf-download-url`, undefined, { claims: auditor });
+check('pdf-download-url: 200 con url y attachment', r.status === 200 && decodeURIComponent(r.body.url ?? '').includes('attachment'), r.body);
+check('pdf-download-url: sha256 del PDF', r.body.pdf_sha256 === PDF_SHA256, r.body);
+r = await call('GET', '/consents/NO-EXISTE/pdf-download-url', undefined, { claims: auditor });
+check('pdf-download-url: 404 si no existe', r.status === 404, r.body);
+r = await call('GET', `/consents/${CONSENT_ID}/pdf-download-url`, undefined, { claims: sinGrupo });
+check('pdf-download-url: 403 sin grupo', r.status === 403, r.body);
+
+r = await call('POST', '/audit/search', { patient_id: PATIENT_ID, kind: 'access' }, { claims: auditor });
+const accessTypes = (r.body.items ?? []).map((i) => i.event_type);
+check('access: solo la descarga queda registrada (las búsquedas no)',
+  r.status === 200 && accessTypes.join() === 'PDF_DOWNLOADED', accessTypes);
+check('access: registra operador e IP', r.body.items?.[0]?.operator_id === claims.sub && r.body.items[0].ip_address === '190.85.12.34', r.body.items?.[0]);
+
+// Pacientes del día: el consentimiento del smoke es del 2026-08-31 20:15Z.
+r = await call('POST', '/patients/today', { from: '2026-08-31T05:00:00.000Z', to: '2026-09-01T05:00:00.000Z' }, { claims: auditor });
+check('today: el paciente del día con nombre y 1 consentimiento',
+  r.status === 200 && r.body.items?.length === 1 && r.body.items[0].patient_id === PATIENT_ID &&
+  r.body.items[0].full_name === 'Nombre Del Paciente' && r.body.items[0].consents === 1, r.body);
+r = await call('POST', '/patients/today', { from: '2026-09-01T05:00:00.000Z', to: '2026-09-02T05:00:00.000Z' }, { claims: auditor });
+check('today: otro día -> vacío', r.status === 200 && r.body.items?.length === 0, r.body);
+r = await call('POST', '/patients/today', { from: '2026-08-01T00:00:00.000Z', to: '2026-09-01T00:00:00.000Z' }, { claims: auditor });
+check('today: rango de más de 48 h -> 400', r.status === 400, r.body);
+r = await call('POST', '/patients/today', { from: 'x', to: 'y' }, { claims: sinGrupo });
+check('today: 403 sin grupo', r.status === 403, r.body);
+
+r = await call('POST', '/patients/suggest', { q: '8293' }, { claims: auditor });
+check('suggest: coincidencia parcial (en medio de la cédula)',
+  r.status === 200 && r.body.items?.[0]?.patient_id === PATIENT_ID && r.body.items[0].full_name === 'Nombre Del Paciente', r.body);
+r = await call('POST', '/patients/suggest', { q: '555' }, { claims: auditor });
+check('suggest: sin coincidencias -> vacío', r.status === 200 && r.body.items?.length === 0, r.body);
+r = await call('POST', '/patients/suggest', { q: '10' }, { claims: auditor });
+check('suggest: menos de 3 caracteres -> 400', r.status === 400, r.body);
+r = await call('POST', '/patients/suggest', { q: 'nombre del' }, { claims: auditor });
+check('suggest: por nombre',
+  r.status === 200 && r.body.items?.[0]?.patient_id === PATIENT_ID && r.body.items[0].matched_by === 'name', r.body);
+r = await call('POST', '/patients/suggest', { q: 'PACIENTE  nómbre' }, { claims: auditor });
+check('suggest: nombre sin importar tildes, mayúsculas ni orden', r.status === 200 && r.body.items?.[0]?.patient_id === PATIENT_ID, r.body);
+r = await call('POST', '/patients/suggest', { q: 'nombre inexistente' }, { claims: auditor });
+check('suggest: nombre sin coincidencias -> vacío', r.status === 200 && r.body.items?.length === 0, r.body);
+r = await call('POST', '/patients/suggest', { q: 'a b' }, { claims: auditor });
+check('suggest: nombre con menos de 3 letras -> 400', r.status === 400, r.body);
+
+// --- 8. plantillas: publicar, servir, versionar, retirar ---------------------------------
+const { readFileSync } = await import('node:fs');
+// El contenido real de templates/CA-F-14.json, fijado en 1.0 para que las pruebas de
+// versionado no dependan de qué versión tenga el archivo hoy.
+const CA_F_14 = { ...JSON.parse(readFileSync(new URL('../templates/CA-F-14.json', import.meta.url), 'utf8')), version: '1.0' };
+const admin = (action, extra = {}) => api({ source: 'acr.admin', action, actor: 'smoke', ...extra }, {});
+r = await admin('reindexNames');
+check('admin: reindexNames reescribe el índice de nombres (idempotente)', r.ok === true && r.result.reindexed >= 1, r);
+
+let a = await admin('publishTemplate', { template: CA_F_14 });
+check('admin: publicar CA-F-14 v1.0', a.ok && a.result.created && a.result.active?.[0]?.code === 'CA-F-14', a);
+a = await admin('publishTemplate', { template: CA_F_14 });
+check('admin: republicar lo mismo es inofensivo', a.ok && a.result.created === false, a);
+a = await admin('publishTemplate', { template: { ...CA_F_14, title: 'Otro texto' } });
+check('admin: misma versión con otro contenido -> 409', !a.ok && a.status === 409, a);
+a = await admin('publishTemplate', { template: { ...CA_F_14, signatures: [] } });
+check('admin: plantilla inválida -> 400', !a.ok && a.status === 400, a);
+a = await admin('borrarTodo');
+check('admin: acción desconocida -> rechazada', !a.ok && a.status === 400, a);
+
+r = await call('GET', '/templates', undefined, { claims });
+check('GET /templates: catálogo con CA-F-14 v1.0 y examType', r.status === 200 && r.body.templates?.[0]?.version === '1.0' && r.body.templates[0].examType === 'TOMA_DE_MUESTRAS', r.body);
+r = await call('GET', '/templates');
+check('GET /templates sin sesión -> 401', r.status === 401, r.body);
+r = await call('GET', '/templates/CA-F-14', undefined, { claims });
+check('GET /templates/CA-F-14: plantilla completa + sha256', r.status === 200 && r.body.template?.blocks?.length === CA_F_14.blocks.length && /^[0-9a-f]{64}$/.test(r.body.sha256 ?? ''), r.body);
+const sha10 = r.body.sha256;
+
+a = await admin('publishTemplate', { template: { ...CA_F_14, version: '1.1', title: 'Toma de muestras (rev. 1.1)' } });
+check('admin: publicar v1.1 la deja activa', a.ok && a.result.active?.length === 1 && a.result.active[0].version === '1.1', a);
+r = await call('GET', '/templates/CA-F-14', undefined, { claims });
+check('la activa ahora es la 1.1', r.status === 200 && r.body.template?.version === '1.1', r.body.template?.version);
+r = await call('GET', '/templates/CA-F-14?version=1.0', undefined, { claims });
+check('la 1.0 sigue disponible pidiéndola', r.status === 200 && r.body.sha256 === sha10, r.body);
+r = await call('GET', '/templates/..%2Fx', undefined, { claims });
+check('código inválido -> 400 o 404', r.status === 400 || r.status === 404, r.body);
+
+// Un consentimiento firmado con una plantilla publicada queda vinculado a ella.
+const tplLog = { ...auditPayload(), consent_id: 'CONS-TPL-1', log_id: crypto.randomUUID(),
+  template: { code: 'CA-F-14', version: '1.0', title: CA_F_14.title, exam_type: 'TOMA_DE_MUESTRAS' } };
+r = await call('POST', '/consents', consentBody(tplLog), { claims });
+const tplEvent = await evidenceStub.getEvent('CONS-TPL-1', 1, 'CONSENT_SIGNED');
+check('consentimiento con plantilla: template_ref verificado con el sha256 publicado',
+  r.status === 201 && tplEvent?.event?.payload?.template_ref?.verified === true && tplEvent.event.payload.template_ref.sha256 === sha10,
+  tplEvent?.event?.payload?.template_ref);
+const ghostLog = { ...auditPayload(), consent_id: 'CONS-TPL-2', log_id: crypto.randomUUID(), template: { code: 'NO-EXISTE', version: '9' } };
+r = await call('POST', '/consents', consentBody(ghostLog), { claims });
+const ghost = await evidenceStub.getEvent('CONS-TPL-2', 1, 'CONSENT_SIGNED');
+check('plantilla no publicada: se acepta igual y queda marcada como no verificada',
+  r.status === 201 && ghost?.event?.payload?.template_ref?.verified === false && ghost.event.payload.template_ref.reason === 'no_publicada',
+  ghost?.event?.payload?.template_ref);
+
+// Paso de aceptar / rechazar
+const withDecision = {
+  ...CA_F_14, code: 'CA-F-99', version: '1.0',
+  decision: {
+    prompt: '¿Autoriza?',
+    accept: { label: 'Acepto', blocks: [{ type: 'note', text: 'Acepto y firmo.' }] },
+    decline: { label: 'No acepto', blocks: [{ type: 'note', text: 'No autorizo y firmo.' }] },
+  },
+};
+a = await admin('publishTemplate', { template: withDecision, activate: false });
+check('plantilla con decision: se publica', a.ok, a);
+r = await call('GET', '/templates/CA-F-99?version=1.0', undefined, { claims });
+check('plantilla con decision: se sirve con accept y decline', r.status === 200 && r.body.template?.decision?.decline?.label === 'No acepto', r.body.template?.decision);
+a = await admin('publishTemplate', { template: { ...withDecision, version: '1.1', decision: { ...withDecision.decision, decline: { label: 'No', blocks: [] } } } });
+check('decision sin texto de rechazo -> 400', !a.ok && a.status === 400, a);
+a = await admin('publishTemplate', { template: { ...CA_F_14, version: '1.9', effectiveDate: 'PENDIENTE' } });
+check('effectiveDate que no es fecha -> 400', !a.ok && a.status === 400, a);
+
+// Volver atrás: republicar el archivo de la 1.0 la reactiva (no crea nada nuevo).
+a = await admin('publishTemplate', { template: CA_F_14 });
+check('rollback: republicar la 1.0 la vuelve a activar', a.ok && a.result.created === false && a.result.active?.[0]?.version === '1.0', a);
+
+a = await admin('retireTemplate', { code: 'CA-F-14' });
+check('admin: retirar CA-F-14', a.ok && a.result.active?.length === 0, a);
+r = await call('GET', '/templates/CA-F-14', undefined, { claims });
+check('retirado: sin versión activa -> 404', r.status === 404, r.body);
+const catalogKeys = [...evidenceStub.__store.keys()].filter((k) => k.startsWith('templates/_catalog/'));
+check('cada cambio dejó su foto del catálogo (4)', catalogKeys.length === 4, catalogKeys);
+
+// --- 9. rechazo firmado ------------------------------------------------------------------
+const declinedLog = { ...auditPayload(), event_type: 'CONSENT_DECLINED', consent_id: 'CONS-RECHAZO-1', log_id: crypto.randomUUID() };
+r = await call('POST', '/consents', consentBody(declinedLog), { claims });
+check('rechazo: POST /consents acepta CONSENT_DECLINED con su PDF', r.status === 201, r.body);
+const declined = await evidenceStub.getEvent('CONS-RECHAZO-1', 1, 'CONSENT_DECLINED');
+check('rechazo: queda como 0001-CONSENT_DECLINED + 0002-PDF_VERIFIED',
+  declined?.event?.event_type === 'CONSENT_DECLINED' && Boolean(await evidenceStub.getEvent('CONS-RECHAZO-1', 2, 'PDF_VERIFIED')), declined?.event?.event_type);
+r = await call('GET', '/consents/CONS-RECHAZO-1/pdf-download-url', undefined, { claims: auditor });
+check('rechazo: su PDF se puede descargar', r.status === 200 && Boolean(r.body.url), r.body);
+r = await call('POST', '/consents', consentBody({ ...auditPayload(), event_type: 'CONSENT_VIEWED', consent_id: 'CONS-VISTO', log_id: crypto.randomUUID() }), { claims });
+check('POST /consents sigue rechazando tipos sin firma (CONSENT_VIEWED) -> 400', r.status === 400, r.body);
+
+// --- 10. varios --------------------------------------------------------------
 const noRoute = await call('POST', '/no/existe', {});
 check('ruta inexistente -> 404 con message', noRoute.status === 404 && Boolean(noRoute.body.message));
 

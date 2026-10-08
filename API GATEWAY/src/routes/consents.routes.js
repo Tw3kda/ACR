@@ -1,8 +1,9 @@
 import { Router } from 'express';
 
 import config from '../config/env.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireGroup } from '../middleware/auth.js';
 import { submitConsent } from '../services/consentService.js';
+import { issuePdfDownloadUrl } from '../services/queryService.js';
 
 const router = Router();
 
@@ -28,6 +29,22 @@ router.post(config.routes.consents, requireAuth, async (req, res, next) => {
       return res.status(200).json({ ...body, duplicate: true });
     }
     return res.status(201).json(body);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// Web de consulta: URL firmada de vida corta para ver (?inline=1) o descargar el PDF.
+router.get(config.routes.pdfDownloadUrl, requireAuth, requireGroup(config.auth.readerGroup), async (req, res, next) => {
+  try {
+    const result = await issuePdfDownloadUrl({
+      consentId: req.params.consent_id,
+      inline: ['1', 'true'].includes(String(req.query.inline ?? '')),
+      ctx: { ...req.ctx, userAgent: req.get('user-agent') ?? null },
+    });
+    // La URL es una autorización al portador: que ningún proxy la guarde.
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json(result);
   } catch (err) {
     return next(err);
   }

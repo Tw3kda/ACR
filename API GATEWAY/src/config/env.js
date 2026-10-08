@@ -74,7 +74,8 @@ const config = {
 
   cors: {
     enabled: bool(raw.CORS_ENABLED, true),
-    origins: list(raw.CORS_ALLOWED_ORIGINS, ['http://localhost:8081']),
+    // 8081 = expo start --web · 5173 = vite (web de consulta, WEB PDF CHECK/)
+    origins: list(raw.CORS_ALLOWED_ORIGINS, ['http://localhost:8081', 'http://localhost:5173']),
     headers: list(raw.CORS_ALLOWED_HEADERS, ['content-type', 'authorization', 'x-api-key']),
     methods: list(raw.CORS_ALLOWED_METHODS, ['GET', 'POST', 'PUT', 'OPTIONS']),
     maxAgeSeconds: int(raw.CORS_MAX_AGE_SECONDS, 600),
@@ -86,6 +87,12 @@ const config = {
     refresh: str(raw.PATH_AUTH_REFRESH, '/auth/refresh'),
     auditLogs: str(raw.PATH_AUDIT_LOGS, '/audit/logs'),
     consents: str(raw.PATH_CONSENTS, '/consents'),
+    auditSearch: str(raw.PATH_AUDIT_SEARCH, '/audit/search'),
+    patientsToday: str(raw.PATH_PATIENTS_TODAY, '/patients/today'),
+    patientsSuggest: str(raw.PATH_PATIENTS_SUGGEST, '/patients/suggest'),
+    templates: str(raw.PATH_TEMPLATES, '/templates'),
+    template: str(raw.PATH_TEMPLATE, '/templates/:code'),
+    pdfDownloadUrl: str(raw.PATH_PDF_DOWNLOAD_URL, '/consents/:consent_id/pdf-download-url'),
     health: str(raw.PATH_HEALTH, '/health'),
   },
 
@@ -101,6 +108,9 @@ const config = {
     // `local`   -> se decodifica el Bearer sin verificar la firma (solo desarrollo).
     claimsSource: str(raw.AUTH_CLAIMS_SOURCE, 'gateway'),
     allowLocalClaims: bool(raw.AUTH_ALLOW_LOCAL_CLAIMS, !isProduction),
+    // Grupo de Cognito exigido por la web de consulta (/audit/search y
+    // /consents/*/pdf-download-url). Vacío = cualquier usuario autenticado.
+    readerGroup: str(raw.AUTH_READER_GROUP, isProduction ? 'auditores' : ''),
   },
 
   cognito: {
@@ -133,6 +143,8 @@ const config = {
     bucket: evidenceBucket,
     eventsPrefix: str(raw.EVIDENCE_EVENTS_PREFIX, 'events'),
     indexPrefix: str(raw.EVIDENCE_INDEX_PREFIX, 'index'),
+    accessPrefix: str(raw.EVIDENCE_ACCESS_PREFIX, 'access'),
+    templatesPrefix: str(raw.EVIDENCE_TEMPLATES_PREFIX, 'templates'),
   },
 
   audit: {
@@ -143,6 +155,8 @@ const config = {
       'CONSENT_REVOKED',
     ]),
     maxBiometricPoints: int(raw.AUDIT_MAX_BIOMETRIC_POINTS, 20000),
+    // Cuántos consentimientos / accesos devuelve /audit/search como máximo.
+    searchMaxItems: int(raw.AUDIT_SEARCH_MAX_ITEMS, 200),
   },
 
   s3: {
@@ -158,6 +172,8 @@ const config = {
     maxBytes: int(raw.PDF_MAX_BYTES, 4 * 1024 * 1024),
     minBytes: int(raw.PDF_MIN_BYTES, 1024),
     kmsKeyId: str(raw.PDF_SSE_KMS_KEY_ID) || undefined,
+    // Vida de la URL firmada de lectura: es una autorización al portador.
+    downloadUrlTtlSeconds: int(raw.PDF_DOWNLOAD_URL_TTL_SECONDS, 60),
   },
 
   // Traza legible de lo recibido y lo enviado. Se enciende sola mientras algún
@@ -175,6 +191,9 @@ const config = {
     seedEmail: str(raw.STUB_SEED_EMAIL, 'demo@acrvitallaboral.com'),
     seedPassword: str(raw.STUB_SEED_PASSWORD, 'Demo1234!'),
     seedName: str(raw.STUB_SEED_NAME, 'Usuario Demo'),
+    // Con los adaptadores simulados, `npm start` crea consentimientos de
+    // ejemplo para que la web de consulta tenga algo que mostrar.
+    seedConsents: bool(raw.STUB_SEED_CONSENTS, true),
   },
 };
 

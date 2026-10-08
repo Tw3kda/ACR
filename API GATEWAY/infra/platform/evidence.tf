@@ -86,19 +86,35 @@ resource "aws_s3_bucket_object_lock_configuration" "evidence" {
 resource "aws_s3_bucket_lifecycle_configuration" "evidence" {
   bucket = aws_s3_bucket.evidence.id
 
+  # Los REGISTROS caducan tras la retención. Las plantillas (templates/) no:
+  # un consentimiento firmado apunta a la versión exacta de su texto, y el
+  # catálogo activo vive ahí — si caducaran, las tablets perderían los
+  # formularios al año. Bloqueadas igual por Object Lock; solo que no se borran.
+  dynamic "rule" {
+    for_each = toset(["events", "index", "access"])
+    content {
+      id     = "expire-${rule.value}-after-retention"
+      status = "Enabled"
+
+      filter {
+        prefix = "${rule.value}/"
+      }
+
+      expiration {
+        days = var.evidence_retention_days + 1
+      }
+
+      noncurrent_version_expiration {
+        noncurrent_days = 1
+      }
+    }
+  }
+
   rule {
-    id     = "expire-after-retention"
+    id     = "abort-incomplete-multipart"
     status = "Enabled"
 
     filter {}
-
-    expiration {
-      days = var.evidence_retention_days + 1
-    }
-
-    noncurrent_version_expiration {
-      noncurrent_days = 1
-    }
 
     abort_incomplete_multipart_upload {
       days_after_initiation = 7

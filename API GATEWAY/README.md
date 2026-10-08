@@ -229,10 +229,12 @@ docs/
   REVISION_API_GATEWAY.md     revisión del Terraform propuesto
 infra/bootstrap/              bucket del estado de Terraform (una vez por cuenta)
 infra/platform/               S3 (evidencia, PDFs), Cognito — guarda datos, estado propio
-infra/api/                    ECR, Lambda, API Gateway, IAM — se aplica en cada push
+infra/api/                    Lambda (.zip, nodejs22.x), API Gateway, IAM — se aplica en cada push
   api_gateway.tf              HTTP API corregido: rutas, CORS, logs, throttling
-scripts/deploy.mjs            build --target lambda → push a ECR → terraform apply
-Dockerfile                    dos destinos: servidor Express y Lambda
+scripts/deploy.mjs            paquete .build/lambda (npm ci --omit=dev) → terraform apply; no necesita Docker
+scripts/publish-template.mjs  formularios de consentimiento: check · publish · retire · list (docs/PLANTILLAS.md)
+templates/                    fuente de los formularios (CA-F-14.json, …)
+Dockerfile                    servidor Express en contenedor (opcional, solo local); la Lambda ya no usa imagen
 .env.example                  todas las variables, comentadas
 src/
   handlers/api.js             Lambda del gateway (evento 2.0 → Express)
