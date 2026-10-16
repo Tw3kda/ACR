@@ -3,7 +3,12 @@ import { Platform } from 'react-native';
 
 import { CA_F_14 } from '@/features/consent/data/caF14';
 import { CA_F_15 } from '@/features/consent/data/caF15';
+import { CA_F_14_M } from '@/features/consent/data/caF14M';
+import { CA_F_15_M } from '@/features/consent/data/caF15M';
 import { CA_F_35 } from '@/features/consent/data/caF35';
+import { CA_F_35_M } from '@/features/consent/data/caF35M';
+import { LAB_F_VIH } from '@/features/consent/data/labFVih';
+import { LAB_F_VIH_M } from '@/features/consent/data/labFVihM';
 import { parseConsentTemplate } from '@/features/consent/services/templateSchema';
 import type { ConsentTemplate } from '@/features/consent/types/consent';
 import { getJson } from '@/services/apiClient';
@@ -26,7 +31,16 @@ import { apiConfig, resolvePath } from '@/services/api/config';
  * instead of breaking the list.
  */
 
-const BUNDLED: readonly unknown[] = [CA_F_14, CA_F_15, CA_F_35];
+const BUNDLED: readonly unknown[] = [
+  CA_F_14,
+  CA_F_15,
+  CA_F_35,
+  LAB_F_VIH,
+  CA_F_14_M,
+  CA_F_15_M,
+  CA_F_35_M,
+  LAB_F_VIH_M,
+];
 const CACHE_FILE = 'templates-cache.json';
 
 export type TemplateSource = 'remote' | 'cache' | 'bundled';
@@ -38,6 +52,8 @@ export type ConsentTemplateSummary = {
   title: string;
   effectiveDate: string;
   examType?: string;
+  /** Picker tab: adults or minors. */
+  audience: 'adult' | 'minor';
 };
 
 type Catalog = { templates: ConsentTemplate[]; source: TemplateSource; savedAt: string | null };
@@ -128,7 +144,14 @@ async function load(): Promise<Catalog> {
 export async function listConsentTemplates(): Promise<ConsentTemplateSummary[]> {
   const { templates } = await load();
   return templates
-    .map(({ code, version, title, effectiveDate, examType }) => ({ code, version, title, effectiveDate, examType }))
+    .map(({ code, version, title, effectiveDate, examType, audience }) => ({
+      code,
+      version,
+      title,
+      effectiveDate,
+      examType,
+      audience: audience ?? 'adult',
+    }))
     .sort((a, b) => a.code.localeCompare(b.code));
 }
 

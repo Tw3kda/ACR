@@ -1,9 +1,10 @@
 {
   "code": "CA-F-15",
-  "version": "1.0",
+  "version": "1.1",
   "title": "Consentimiento informado — Frotis faríngeo",
   "examType": "FROTIS_FARINGEO",
-  "effectiveDate": "2024-01-09",
+  "audience": "adult",
+  "effectiveDate": "2026-10-09",
   "blocks": [
     {
       "type": "heading",
@@ -12,19 +13,19 @@
     },
     {
       "type": "paragraph",
-      "text": "La IPS ACR VITAL LABORAL SAS, identificada con NIT: 901066615 será la responsable del tratamiento y, en tal virtud, podrá recolectar, almacenar, y usar los datos personales de los pacientes como antecedentes personales y familiares Nombres, apellidos, edad, identificación, número de contacto, género, fecha de nacimiento, correo electrónico y otros que fuesen necesarios para el correcto diligenciamiento de la historia clínica y la realización de procedimientos asistenciales de Toma y procesamiento de muestras de laboratorio clínico."
+      "text": "La IPS ACR VITAL LABORAL SAS, identificada con NIT: 901066615, será la responsable del tratamiento y, en tal virtud, podrá recolectar, almacenar y usar los datos personales de los pacientes, como antecedentes personales y familiares, nombres, apellidos, edad, identificación, número de contacto, género, fecha de nacimiento, correo electrónico y otros que fuesen necesarios para el correcto diligenciamiento de la historia clínica y la realización de procedimientos asistenciales de toma y procesamiento de muestras de laboratorio clínico."
     },
     {
       "type": "paragraph",
-      "text": "Manifiesto que me informaron que en caso de recolección de mi información sensible como la de mi estado de salud, tengo derecho a contestar o no las preguntas que me formulen y a entregar o no los datos solicitados."
+      "text": "Manifiesto que me informaron que, en caso de recolección de mi información sensible, como la relativa a mi estado de salud, tengo derecho a contestar o no las preguntas que me formulen y a entregar o no los datos solicitados."
     },
     {
       "type": "paragraph",
-      "text": "Entiendo que son datos sensibles aquellos que afectan la intimidad del Titular o cuyo uso indebido puede generar discriminación como el estado de salud."
+      "text": "Entiendo que son datos sensibles aquellos que afectan la intimidad del titular o cuyo uso indebido puede generar discriminación, como el estado de salud."
     },
     {
       "type": "paragraph",
-      "text": "Manifiesto que me informaron que los datos sensibles que se recolectarán serán utilizados para el adecuado diligenciamiento de la historia clínica en la IPS ACR VITAL LABORAL SAS."
+      "text": "Manifiesto que me informaron que los datos sensibles que se recolectarán serán utilizados únicamente para el adecuado diligenciamiento de la historia clínica en la IPS ACR VITAL LABORAL SAS, bajo reserva."
     },
     {
       "type": "heading",
@@ -33,7 +34,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Sus derechos como titular del dato son los previstos en La Constitución y en la Ley 1581 de 2012, especialmente los siguientes:"
+      "text": "Sus derechos como titular del dato son los previstos en la Constitución y en la Ley 1581 de 2012, especialmente los siguientes:"
     },
     {
       "type": "paragraph",
@@ -62,16 +63,16 @@
     },
     {
       "type": "paragraph",
-      "text": "f) Abstenerse de responder las preguntas sobre datos sensibles o sobre datos de las niñas y niños y adolescentes.",
+      "text": "f) Abstenerse de responder las preguntas sobre datos sensibles o sobre datos de los niños, niñas y adolescentes.",
       "indent": 1
     },
     {
       "type": "paragraph",
-      "text": "Estos derechos los podré ejercer a través de los canales o medios dispuestos por la IPS ACR VITAL LABORAL SAS, para la atención al público, el correo electrónico: acrvitallaboralsas@gmail.com y en las instalaciones de la IPS CRA 7 # 7-20 Tocancipá."
+      "text": "Estos derechos los podré ejercer a través de los canales o medios dispuestos por la IPS ACR VITAL LABORAL SAS para la atención al público, el correo electrónico: acrvitallaboralsas@gmail.com y en las instalaciones de la IPS CRA 7 # 7-20, Tocancipá."
     },
     {
       "type": "paragraph",
-      "text": "Por todo lo anterior, he otorgado mi consentimiento a la IPS ACR VITAL LABORAL SAS, para que trate mi información personal de acuerdo con la Política de Tratamiento de Datos Personales."
+      "text": "Por todo lo anterior, otorgo mi autorización a la IPS ACR VITAL LABORAL SAS para que trate mi información personal de acuerdo con la Política de Tratamiento de Datos Personales."
     },
     {
       "type": "paragraph",
@@ -123,7 +124,7 @@
       "type": "list",
       "indent": 1,
       "items": [
-        "Se puede producir molestias, náuseas y ganas de toser, pero solo dura unos cuantos segundos."
+        "Se pueden producir molestias, náuseas y ganas de toser, pero solo duran unos cuantos segundos."
       ]
     },
     {
@@ -136,7 +137,8 @@
       "indent": 1,
       "items": [
         "Adecuada posición del paciente.",
-        "Selección de insumos que cumplan con criterios de calidad."
+        "Selección de insumos que cumplan con criterios de calidad.",
+        "Explicar al paciente, antes de iniciar y en lenguaje sencillo, en qué consiste el procedimiento y cuánto dura."
       ]
     },
     {
@@ -157,39 +159,18 @@
       "type": "list",
       "indent": 1,
       "items": [
-        "La IPS ACR VITAL LABORAL SAS mantiene absoluta confidencialidad sobre sus resultados, queda una copia de los mismos en el sistema informático. El acceso a ese sistema está protegido para que no pueda ser consultado por otras personas.",
-        "El procedimiento de Frotis Faríngeo se realiza de forma segura y es la opción comúnmente utilizada para posterior realización del procesamiento de la muestra, sin embargo, es un procedimiento seguro siempre y cuando se emplee la técnica correcta y los insumos seguros y confiables.",
-        "El cumplimiento de las recomendaciones por parte de la profesional (Bacterióloga) antes, durante y después del procedimiento de Frotis Faríngeo son de gran importancia para acatar por parte del paciente y para lograr los resultados esperados.",
-        "Es importante que la profesional (Bacterióloga) explique todos estos aspectos al paciente, responda a todas sus preguntas y se asegure que el paciente comprenda completamente el procedimiento de Frotis, beneficios, riesgos/complicaciones, alternativas antes de obtener el consentimiento informado para realizar el procedimiento. El paciente tiene el derecho de aceptar o rechazar la realización del Frotis Faríngeo después de recibir toda la información necesaria."
-      ]
-    }
-  ],
-  "decision": {
-    "prompt": "¿Autoriza la realización del frotis faríngeo?",
-    "accept": {
-      "label": "Acepto",
-      "blocks": [
-        {
-          "type": "note",
-          "text": "Al firmar este documento declaro que he sido informado verbalmente, he leído y entendido la información correspondiente al procedimiento que se me va a realizar, pude formular las preguntas que tenía y encontré las respuestas que me permiten comprender los beneficios, riesgos, efectos. Declaro que soy mayor de edad y en uso pleno de mis facultades doy mi consentimiento y firmo."
-        }
+        "La IPS ACR VITAL LABORAL SAS mantiene absoluta confidencialidad sobre sus resultados; queda una copia de los mismos en el sistema informático, cuyo acceso está protegido para que no pueda ser consultado por personas no autorizadas.",
+        "El procedimiento de frotis faríngeo es la opción comúnmente utilizada para el posterior procesamiento de la muestra, y es un procedimiento seguro siempre y cuando se emplee la técnica correcta y los insumos seguros y confiables.",
+        "El cumplimiento de las recomendaciones dadas por la profesional (bacterióloga) antes, durante y después del procedimiento de frotis faríngeo es de gran importancia para lograr los resultados esperados.",
+        "Es importante que la profesional (bacterióloga) explique todos estos aspectos al paciente, responda todas sus preguntas y se asegure de que comprenda completamente el procedimiento de frotis, sus beneficios, riesgos/complicaciones y alternativas antes de obtener el consentimiento informado. El paciente tiene derecho a aceptar o rechazar la realización del frotis faríngeo después de recibir toda la información necesaria."
       ]
     },
-    "decline": {
-      "label": "No acepto",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Desistimiento"
-        },
-        {
-          "type": "note",
-          "text": "Yo, el (la) abajo firmante, identificado(a) como aparece al pie de mi firma, actuando en nombre propio o como representante legal del paciente, declaro que he sido informado(a) de la naturaleza y riesgos del procedimiento propuesto, manifiesto de forma libre y consciente mi DESISTIMIENTO para su realización, haciéndome responsable de las consecuencias que puedan derivarse de esta decisión."
-        }
-      ]
+    {
+      "type": "paragraph",
+      "text": "Marco normativo: Ley 1581 de 2012 y Decreto 1074 de 2015 (protección de datos personales).",
+      "emphasis": "italic"
     }
-  },
+  ],
   "fields": [
     {
       "key": "nombre",
@@ -204,6 +185,13 @@
       "input": "number",
       "required": true,
       "placeholder": "Número de identificación"
+    },
+    {
+      "key": "motivo_desistimiento",
+      "label": "Motivo del desistimiento",
+      "input": "text",
+      "required": false,
+      "decision": "decline"
     }
   ],
   "signatures": [
@@ -237,5 +225,31 @@
       "type": "date",
       "label": "Fecha"
     }
-  ]
+  ],
+  "decision": {
+    "prompt": "¿Autoriza la realización del frotis faríngeo?",
+    "accept": {
+      "label": "Acepto",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Al firmar este documento declaro que he sido informado verbalmente, he leído y entendido la información correspondiente al procedimiento que se me va a realizar, pude formular las preguntas que tenía y encontré las respuestas que me permiten comprender los beneficios, riesgos, efectos. Declaro que soy mayor de edad y en uso pleno de mis facultades doy mi consentimiento y firmo."
+        }
+      ]
+    },
+    "decline": {
+      "label": "No acepto",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Desistimiento"
+        },
+        {
+          "type": "note",
+          "text": "Yo, el (la) abajo firmante, identificado(a) como aparece al pie de mi firma, actuando en nombre propio, declaro que he sido informado(a) de la naturaleza y riesgos del procedimiento propuesto y manifiesto de forma libre y consciente mi DESISTIMIENTO para su realización, haciéndome responsable de las consecuencias que puedan derivarse de esta decisión."
+        }
+      ]
+    }
+  }
 }

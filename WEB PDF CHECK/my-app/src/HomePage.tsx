@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { listToday, suggestPatients, type PatientCard } from './api';
+import { base64ToBytes, getDayPdf, listToday, saveFile, suggestPatients, type PatientCard } from './api';
 import { formatDate, formatTime } from './format';
 import PatientView from './PatientView';
+import { buildZip, type ZipEntry } from './zip';
 
 const MIN_SERVER_QUERY = 3;
 
@@ -15,6 +16,47 @@ export default function HomePage() {
   const [result, setResult] = useState<{ q: string; items: PatientCard[]; error: string } | null>(null);
   const [selected, setSelected] = useState<PatientCard | null>(null);
   const requestSeq = useRef(0);
+  // Descarga del día: un PDF por paciente (todos sus consentimientos unidos),
+  // nombrado por cédula, todos en un ZIP.
+  const [zipProgress, setZipProgress] = useState<{ done: number; total: number } | null>(null);
+  const [zipMessage, setZipMessage] = useState('');
+
+  const downloadToday = async () => {
+    const patients = today ?? [];
+    if (patients.length === 0) return;
+    setZipMessage('');
+    setZipProgress({ done: 0, total: patients.length });
+    const entries: ZipEntry[] = [];
+    const skipped: string[] = [];
+    const failed: string[] = [];
+    const now = new Date();
+    // Uno tras otro: cada petición une y registra los consentimientos de un paciente.
+    for (const [i, p] of patients.entries()) {
+      try {
+        const pdf = await getDayPdf(p.patient_id, now);
+        entries.push({ name: pdf.filename, data: base64ToBytes(pdf.pdf_base64) });
+      } catch (err) {
+        // 404: ese paciente no tiene aún un PDF verificado hoy.
+        if ((err as { status?: number }).status === 404) skipped.push(p.patient_id);
+        else failed.push(`${p.patient_id}: ${(err as Error).message}`);
+      }
+      setZipProgress({ done: i + 1, total: patients.length });
+    }
+    setZipProgress(null);
+    if (entries.length > 0) {
+      const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      saveFile(buildZip(entries, now), `consentimientos_${day}.zip`);
+    }
+    setZipMessage(
+      [
+        entries.length > 0 ? `ZIP con ${entries.length} paciente${entries.length === 1 ? '' : 's'} (un PDF por cédula).` : 'No había PDF verificados para descargar.',
+        skipped.length > 0 ? `Sin PDF verificado: ${skipped.join(', ')}.` : '',
+        failed.length > 0 ? `No se pudieron descargar: ${failed.join(' · ')}.` : '',
+      ]
+        .filter(Boolean)
+        .join(' ')
+    );
+  };
 
   const loadToday = useCallback(async () => {
     try {
@@ -101,12 +143,26 @@ export default function HomePage() {
         <div className="section-head">
           <h2>{filteringServer ? `Resultados para “${q}”` : 'Pacientes atendidos hoy'}</h2>
           {!filteringServer && (
-            <button className="btn btn-link" onClick={loadToday}>
-              Actualizar
-            </button>
+            <div className="section-actions">
+              {(today?.length ?? 0) > 0 && (
+                <button
+                  className="btn btn-ghost"
+                  disabled={zipProgress !== null}
+                  onClick={downloadToday}
+                  title="Un PDF por paciente, con todos sus consentimientos de hoy, nombrado por cédula"
+                >
+                  {zipProgress ? `Preparando ${zipProgress.done}/${zipProgress.total}…` : 'Descargar los de hoy (ZIP)'}
+                </button>
+              )}
+              <button className="btn btn-link" onClick={loadToday}>
+                Actualizar
+              </button>
+            </div>
           )}
           {filteringServer && searching && <span className="muted">Buscando…</span>}
         </div>
+
+        {!filteringServer && zipMessage && <p className="hint muted">{zipMessage}</p>}
 
         {(filteringServer ? searchError : todayError) && (
           <p className="error banner" role="alert">{filteringServer ? searchError : todayError}</p>

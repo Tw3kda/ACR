@@ -18,7 +18,15 @@ import { Button } from "@/components/ui/Button";
 import { SignaturePad } from "@/components/ui/SignaturePad";
 import { ConsentDocumentBody } from "@/features/consent/components/ConsentDocument";
 import { ConsentFields } from "@/features/consent/components/ConsentFields";
-import { useConsentDraft } from "@/features/consent/store/consentDraftStore";
+import {
+  fieldsFilledBy,
+  isFieldRequired,
+  isSignatureRequired,
+} from "@/features/consent/services/fieldRules";
+import {
+  parseSessionKey,
+  useConsentDraft,
+} from "@/features/consent/store/consentDraftStore";
 import type { DecisionChoice } from "@/features/consent/types/consent";
 
 /** Slack in pixels: "the bottom" should not require a pixel-perfect scroll. */
@@ -34,15 +42,18 @@ export default function ConsentFillScreen() {
   const { code } = useLocalSearchParams<{ code: string }>();
   const router = useRouter();
   const {
-    template,
-    baseTemplate,
+    baseTemplates,
+    loadedKey,
+    decisionStep,
     decision,
     setDecision,
+    fields,
+    signatureSlots,
     values,
     signatures,
     isLoading,
     error,
-    loadTemplate,
+    loadTemplates,
     setValue,
     setSignature,
     setBiometrics,
@@ -67,11 +78,12 @@ export default function ConsentFillScreen() {
     [markScrolledToBottom],
   );
 
+  // `code` is the session: one form code, or several separated by commas.
   useEffect(() => {
-    if (code && template?.code !== code) {
-      loadTemplate(code);
+    if (code && loadedKey !== code) {
+      loadTemplates(parseSessionKey(code));
     }
-  }, [code, template?.code, loadTemplate]);
+  }, [code, loadedKey, loadTemplates]);
 
   /**
    * Keyboard handling, in two parts.
@@ -134,7 +146,7 @@ export default function ConsentFillScreen() {
     [scrollFocusedFieldIntoView],
   );
 
-  if (isLoading || (!template && !error)) {
+  if (isLoading || (loadedKey !== code && !error)) {
     return (
       <View style={styles.center}>
         <ActivityIndicator />
@@ -142,7 +154,7 @@ export default function ConsentFillScreen() {
     );
   }
 
-  if (error || !template || !baseTemplate) {
+  if (error || baseTemplates.length === 0) {
     return (
       <View style={styles.center}>
         <Text style={styles.error}>
@@ -152,12 +164,13 @@ export default function ConsentFillScreen() {
     );
   }
 
-  const patientSignatures = template.signatures.filter(
+  const isBatch = baseTemplates.length > 1;
+  const patientSignatures = signatureSlots.filter(
     (slot) => slot.signer === "patient",
   );
   // Forms with an accept/decline step show the fields and signature only once
   // the patient has answered; the chosen text is part of what they sign.
-  const awaitingDecision = Boolean(baseTemplate.decision) && !decision;
+  const awaitingDecision = Boolean(decisionStep) && !decision;
 
   return (
     <ScrollView
@@ -178,17 +191,33 @@ export default function ConsentFillScreen() {
     >
       {/* No document header while filling — it belongs to the rendered
           document, which the patient sees in the preview and the PDF. */}
-      <Text style={styles.title}>{template.title}</Text>
-      <ConsentDocumentBody blocks={baseTemplate.blocks} />
+      {isBatch ? (
+        <Text style={styles.batchNotice}>
+          {baseTemplates.length} documentos. Léalos todos: al final responde una
+          sola vez y firma una sola vez para todos.
+        </Text>
+      ) : null}
+      {baseTemplates.map((form, index) => (
+        <View key={form.code} style={styles.document}>
+          {isBatch ? (
+            <Text style={styles.documentCounter}>
+              Documento {index + 1} de {baseTemplates.length} · {form.code}
+            </Text>
+          ) : null}
+          <Text style={styles.title}>{form.title}</Text>
+          <ConsentDocumentBody blocks={form.blocks} />
+          {isBatch && index < baseTemplates.length - 1 ? (
+            <View style={styles.documentSeparator} />
+          ) : null}
+        </View>
+      ))}
 
-      {baseTemplate.decision ? (
+      {decisionStep ? (
         <View style={styles.decision}>
           {decision === null ? (
             // 1. The question, with both answers side by side.
             <>
-              <Text style={styles.decisionPrompt}>
-                {baseTemplate.decision.prompt}
-              </Text>
+              <Text style={styles.decisionPrompt}>{decisionStep.prompt}</Text>
               <View style={styles.decisionButtons}>
                 {(["accept", "decline"] as const).map((choice) => (
                   <Pressable
@@ -207,7 +236,9 @@ export default function ConsentFillScreen() {
                       {choice === "accept" ? "✓" : "✗"}
                     </Text>
                     <Text style={styles.choiceLabel}>
-                      {baseTemplate.decision![choice].label}
+                      {choice === "accept"
+                        ? decisionStep.acceptLabel
+                        : decisionStep.declineLabel}
                     </Text>
                   </Pressable>
                 ))}
@@ -219,11 +250,25 @@ export default function ConsentFillScreen() {
             <>
               <DecisionBanner
                 choice={decision}
-                label={baseTemplate.decision[decision].label}
+                label={
+                  decision === "accept"
+                    ? decisionStep.acceptLabel
+                    : decisionStep.declineLabel
+                }
               />
-              <ConsentDocumentBody
-                blocks={baseTemplate.decision[decision].blocks}
-              />
+              {/* Each form keeps its own acceptance or refusal text. */}
+              {baseTemplates.map((form) =>
+                form.decision ? (
+                  <View key={form.code} style={styles.decisionText}>
+                    {isBatch ? (
+                      <Text style={styles.documentCounter}>{form.code}</Text>
+                    ) : null}
+                    <ConsentDocumentBody
+                      blocks={form.decision[decision].blocks}
+                    />
+                  </View>
+                ) : null,
+              )}
               <Pressable
                 accessibilityRole="button"
                 onPress={() =>
@@ -249,9 +294,10 @@ export default function ConsentFillScreen() {
           <View style={styles.divider} />
 
           <ConsentFields
-            fields={template.fields}
+            fields={fieldsFilledBy(fields, "patient", decision)}
             values={values}
             onChange={setValue}
+            isRequired={(field) => isFieldRequired(field, values, decision)}
             onFieldFocus={handleFieldFocus}
           />
 
@@ -261,7 +307,10 @@ export default function ConsentFillScreen() {
               key={`${slot.key}-${decision ?? "none"}`}
               style={styles.signatureSection}
             >
-              <Text style={styles.label}>{slot.label}</Text>
+              <Text style={styles.label}>
+                {slot.label}
+                {isSignatureRequired(slot, values) ? "" : " (si aplica)"}
+              </Text>
               <SignaturePad
                 label={slot.label}
                 onChange={(dataUrl) => setSignature(slot.key, dataUrl)}
@@ -339,6 +388,29 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   title: { fontSize: 18, fontWeight: "700", color: "#12212b" },
+  batchNotice: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#12212b",
+    backgroundColor: "#eef4ff",
+    borderLeftWidth: 3,
+    borderLeftColor: "#2563eb",
+    padding: 12,
+  },
+  document: { gap: 12 },
+  documentCounter: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2563eb",
+    textTransform: "uppercase",
+  },
+  documentSeparator: {
+    height: 3,
+    backgroundColor: "#2563eb",
+    opacity: 0.25,
+    marginTop: 12,
+  },
+  decisionText: { gap: 6 },
   divider: { height: 1, backgroundColor: "#d7e1e1", marginVertical: 4 },
   label: { fontSize: 13, fontWeight: "600", color: "#4e6870" },
   signatureSection: { gap: 8 },

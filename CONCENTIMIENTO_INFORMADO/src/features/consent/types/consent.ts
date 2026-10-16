@@ -14,13 +14,30 @@ export type ConsentBlock =
   | { type: 'note'; text: string }
   | { type: 'spacer' };
 
+/**
+ * "Required only when field `key` has one of these values" — e.g. the legal
+ * representative signs only for the decision types that involve them. For a
+ * multiple-choice field, when it includes any of them.
+ */
+export type RequiredWhen = { key: string; in: string[] };
+
 /** A value supplied before signing. */
 export type ConsentField = {
   key: string;
   label: string;
-  input: 'text' | 'number';
+  /** `date` is typed as DD/MM/AAAA; `select` offers `options` as buttons. */
+  input: 'text' | 'number' | 'date' | 'select';
   required?: boolean;
   placeholder?: string;
+  /** For `select`: the choices. */
+  options?: string[];
+  /** For `select`: several choices at once (stored joined with "; "). */
+  multiple?: boolean;
+  /** Who fills it: the patient side before signing (default) or the professional. */
+  filledBy?: 'patient' | 'professional';
+  /** Shown — and required — only with this answer to the decision step. */
+  decision?: 'accept' | 'decline';
+  requiredWhen?: RequiredWhen;
   /**
    * Fills the field from the session and locks it.
    *
@@ -40,6 +57,7 @@ export type SignatureSlot = {
   label: string;
   signer: SignerRole;
   required?: boolean;
+  requiredWhen?: RequiredWhen;
 };
 
 /**
@@ -85,6 +103,8 @@ export type ConsentTemplate = {
    * those fall back to the deployment's EXPO_PUBLIC_MEDICAL_EXAM_TYPE.
    */
   examType?: string;
+  /** Which tab of the picker lists it: adults (default) or minors. */
+  audience?: 'adult' | 'minor';
   /** When this revision of the form was created. Printed in the masthead. */
   effectiveDate: string;
   /** Content */
@@ -103,4 +123,6 @@ export type ConsentSubmission = {
   values: Record<string, string>;
   signatures: Record<string, string>;
   signedAt: Date;
+  /** The answer to the decision step, which decides which fields appear. */
+  decision?: DecisionChoice | null;
 };

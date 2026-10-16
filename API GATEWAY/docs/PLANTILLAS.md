@@ -60,6 +60,7 @@ es copiarlo y editarlo.
   "version": "1.0",                     // se sube en cada cambio: 1.0 → 1.1 → 1.2 …
   "title": "Consentimiento informado — Audiometría",
   "examType": "AUDIOMETRIA",            // MAYÚSCULAS_CON_GUIONES_BAJOS; va al registro como tipo de examen
+  "audience": "adult",                  // pestaña de la tablet: "adult" (por defecto) o "minor"
   "effectiveDate": "2026-10-06",        // fecha de esta revisión; se imprime en el encabezado
   "blocks": [ … ],                      // el texto del documento, en orden
   "fields": [ … ],                      // lo que se escribe antes de firmar
@@ -84,10 +85,21 @@ es copiarlo y editarlo.
 { "key": "cedula", "label": "Cédula del paciente", "input": "number", "required": true, "placeholder": "Número de identificación" }
 ```
 
-- `input`: `text` o `number`. `required` es `true` si se omite.
+- `input`: `text`, `number`, `date` (se escribe DD/MM/AAAA) o `select` (botones con `options`;
+  con `"multiple": true` se pueden marcar varias). `required` es `true` si se omite.
 - `prefill`: `professional.name` o `professional.email` para rellenar con el profesional de la sesión.
-- **Usa `nombre` y `cedula` como claves** del paciente: son las que el registro de auditoría
-  reconoce como nombre y documento.
+- `filledBy`: `"professional"` para lo que diligencia el profesional en su paso de firma
+  (valoración, registro profesional…). Por defecto lo diligencia el paciente.
+- `decision`: `"accept"` o `"decline"` — el campo solo aparece con esa respuesta
+  (p. ej. «Motivo del desistimiento»).
+- `requiredWhen`: `{ "key": "tipo_decision", "in": ["…", "…"] }` — obligatorio solo cuando otro
+  campo de selección tiene uno de esos valores. Se publica solo si `key` existe y las opciones
+  coinciden.
+- **Usa `nombre` y `cedula` (o `documento`) como claves** del paciente: son las que el registro de
+  auditoría reconoce como nombre y documento.
+
+Ejemplo de formato de menores, con representante legal, tipo de decisión y valoración del
+profesional: [`templates/CA-F-14-M.json`](../templates/CA-F-14-M.json).
 
 **`signatures`** — al menos una:
 
@@ -96,7 +108,9 @@ es copiarlo y editarlo.
 ```
 
 `signer`: `patient` o `professional`. Primero firma el paciente y luego se entrega la tablet
-al profesional.
+al profesional. El representante legal y el testigo firman con el paciente (`signer: "patient"`).
+Una firma también acepta `requiredWhen` (p. ej. el representante solo firma en el consentimiento
+sustituto); si no aplica, el PDF dice «No aplica».
 
 **`footer`** — la fila final del formulario en papel (si se omite: todas las firmas y la fecha):
 

@@ -1,17 +1,18 @@
 /**
- * CA-F-14 v1.1 — copia de respaldo incluida en el APK.
+ * CA-F-14 v1.2 — copia de respaldo incluida en el APK.
  *
- * GENERADO desde `API GATEWAY/templates/CA-F-14.json` (la fuente que se publica en AWS).
- * No editar a mano: cambiar el JSON, publicarlo, y regenerar esta copia en la
- * próxima versión del APK. La app solo la usa si la tablet nunca ha descargado
- * las plantillas (sin conexión desde la instalación).
+ * GENERADO desde `API GATEWAY/templates/CA-F-14.json` (la fuente que se publica en AWS)
+ * por `templates/borradores/build-2026-10.mjs`. No editar a mano: cambiar el JSON,
+ * publicarlo, y regenerar esta copia en la próxima versión del APK. La app solo la
+ * usa si la tablet nunca ha descargado las plantillas (sin conexión desde la instalación).
  */
 export const CA_F_14 = {
   "code": "CA-F-14",
-  "version": "1.1",
+  "version": "1.2",
   "title": "Protección de datos y consentimiento informado — Toma de muestras",
   "examType": "TOMA_DE_MUESTRAS",
-  "effectiveDate": "2023-01-09",
+  "audience": "adult",
+  "effectiveDate": "2026-10-09",
   "blocks": [
     {
       "type": "heading",
@@ -20,19 +21,19 @@ export const CA_F_14 = {
     },
     {
       "type": "paragraph",
-      "text": "La IPS ACR VITAL LABORAL SAS, identificada con NIT: 901066615 será la responsable del tratamiento y, en tal virtud, podrá recolectar, almacenar, y usar los datos personales de los pacientes como antecedentes personales y familiares Nombres, apellidos, edad, identificación, número de contacto, género, fecha de nacimiento, correo electrónico y otros que fuesen necesarios para el correcto diligenciamiento de la historia clínica y la realización de procedimientos asistenciales de Toma y procesamiento de muestras de laboratorio clínico."
+      "text": "La IPS ACR VITAL LABORAL SAS, identificada con NIT: 901066615, será la responsable del tratamiento y, en tal virtud, podrá recolectar, almacenar y usar los datos personales de los pacientes, como antecedentes personales y familiares, nombres, apellidos, edad, identificación, número de contacto, género, fecha de nacimiento, correo electrónico y otros que fuesen necesarios para el correcto diligenciamiento de la historia clínica y la realización de procedimientos asistenciales de toma y procesamiento de muestras de laboratorio clínico."
     },
     {
       "type": "paragraph",
-      "text": "Manifiesto que me informaron que en caso de recolección de mi información sensible como la de mi estado de salud, tengo derecho a contestar o no las preguntas que me formulen y a entregar o no los datos solicitados."
+      "text": "Manifiesto que me informaron que, en caso de recolección de mi información sensible, como la relativa a mi estado de salud, tengo derecho a contestar o no las preguntas que me formulen y a entregar o no los datos solicitados."
     },
     {
       "type": "paragraph",
-      "text": "Entiendo que son datos sensibles aquellos que afectan la intimidad del Titular o cuyo uso indebido puede generar discriminación como el estado de salud."
+      "text": "Entiendo que son datos sensibles aquellos que afectan la intimidad del titular o cuyo uso indebido puede generar discriminación, como el estado de salud."
     },
     {
       "type": "paragraph",
-      "text": "Manifiesto que me informaron que los datos sensibles que se recolectarán serán utilizados para el adecuado diligenciamiento de la historia clínica en la IPS ACR VITAL LABORAL SAS."
+      "text": "Manifiesto que me informaron que los datos sensibles que se recolectarán serán utilizados únicamente para el adecuado diligenciamiento de la historia clínica en la IPS ACR VITAL LABORAL SAS, bajo reserva."
     },
     {
       "type": "heading",
@@ -41,7 +42,7 @@ export const CA_F_14 = {
     },
     {
       "type": "paragraph",
-      "text": "Sus derechos como titular del dato son los previstos en La Constitución y en la Ley 1581 de 2012, especialmente los siguientes:"
+      "text": "Sus derechos como titular del dato son los previstos en la Constitución y en la Ley 1581 de 2012, especialmente los siguientes:"
     },
     {
       "type": "paragraph",
@@ -70,16 +71,16 @@ export const CA_F_14 = {
     },
     {
       "type": "paragraph",
-      "text": "f) Abstenerse de responder las preguntas sobre datos sensibles o sobre datos de las niñas y niños y adolescentes.",
+      "text": "f) Abstenerse de responder las preguntas sobre datos sensibles o sobre datos de los niños, niñas y adolescentes.",
       "indent": 1
     },
     {
       "type": "paragraph",
-      "text": "Estos derechos los podré ejercer a través de los canales o medios dispuestos por la IPS ACR VITAL LABORAL SAS, para la atención al público, el correo electrónico: acrvitallaboralsas@gmail.com y en las instalaciones de la IPS Calle 7 # 07-20 Tocancipá."
+      "text": "Estos derechos los podré ejercer a través de los canales o medios dispuestos por la IPS ACR VITAL LABORAL SAS para la atención al público, el correo electrónico: acrvitallaboralsas@gmail.com y en las instalaciones de la IPS Calle 7 # 07-20, Tocancipá."
     },
     {
       "type": "paragraph",
-      "text": "Por todo lo anterior, he otorgado mi consentimiento a la IPS ACR VITAL LABORAL SAS, para que trate mi información personal de acuerdo con la Política de Tratamiento de Datos Personales."
+      "text": "Por todo lo anterior, otorgo mi autorización a la IPS ACR VITAL LABORAL SAS para que trate mi información personal de acuerdo con la Política de Tratamiento de Datos Personales."
     },
     {
       "type": "paragraph",
@@ -95,7 +96,7 @@ export const CA_F_14 = {
     },
     {
       "type": "paragraph",
-      "text": "Señor usuario para la toma de muestras no se debe haber ingerido alimentos en las últimas 10 y preferiblemente 12 horas. No ingerir bebidas alcohólicas antes de 72 horas. Si no está en ayunas, comuníquelo al personal que le atiende. En algunos casos no es necesario estar en ayunas y podrán realizarse los análisis, en otros casos se registrará esos datos en el interrogatorio de pacientes para tenerlo en cuenta a la hora de interpretar los resultados. Una información incorrecta puede llevar a conclusiones erróneas sobre su estado de salud. Su colaboración es necesaria, usted es el primer interesado. El material utilizado para extraer la sangre es estéril y desechable por lo que no existe riesgo de infección."
+      "text": "Señor usuario: para la toma de muestras no se deben haber ingerido alimentos en las últimas 10 y preferiblemente 12 horas. No ingerir bebidas alcohólicas en las 72 horas previas. Si no está en ayunas, comuníquelo al personal que le atiende. En algunos casos no es necesario estar en ayunas y podrán realizarse los análisis; en otros casos se registrarán esos datos en el interrogatorio para tenerlos en cuenta a la hora de interpretar los resultados. Una información incorrecta puede llevar a conclusiones erróneas sobre su estado de salud; su colaboración es necesaria, usted es el primer interesado. El material utilizado para extraer la sangre es estéril y desechable, por lo que no existe riesgo de infección por el material."
     },
     {
       "type": "heading",
@@ -104,7 +105,7 @@ export const CA_F_14 = {
     },
     {
       "type": "paragraph",
-      "text": "La Venopunción es un procedimiento frecuente en el laboratorio clínico para la obtención de muestras de suero, plasma y sangre total, los cuales son importantes para realizar análisis paraclínicos y cuyos reportes son de ayuda para el médico tratante en el momento de esclarecer diagnósticos, monitorizar afecciones de salud crónicos o en forma preventiva."
+      "text": "La venopunción es un procedimiento frecuente en el laboratorio clínico para la obtención de muestras de suero, plasma y sangre total, las cuales son importantes para realizar análisis paraclínicos y cuyos reportes son de ayuda para el médico tratante en el momento de esclarecer diagnósticos, monitorizar afecciones de salud crónicas o en forma preventiva."
     },
     {
       "type": "heading",
@@ -117,7 +118,7 @@ export const CA_F_14 = {
       "items": [
         "Extracción de sangre en la cantidad requerida con los cuidados asistenciales estipulados y por personal idóneo.",
         "Extracción de sangre segura bajo lineamientos e insumos de alta calidad.",
-        "Obtener una parte representativa de sangre para realizar un estudio en el Laboratorio clínico."
+        "Obtener una parte representativa de sangre para realizar un estudio en el laboratorio clínico."
       ]
     },
     {
@@ -129,12 +130,12 @@ export const CA_F_14 = {
       "type": "list",
       "indent": 1,
       "items": [
-        "Puede presentar una discreta hinchazón, estas molestias menores son poco frecuentes y no requieren tratamiento ni medicación específica.",
-        "En el momento de la toma de muestra de sangre por Venopunción, sentirá un leve dolor tipo pinchazo.",
-        "En casos esporádicos se podrían presentar complicaciones de este procedimiento, como hematoma y/o dolor leve, los cuales mejorarán espontáneamente o con medidas locales.",
-        "En casos excepcionales, este dolor podría ser más severo y persistente o presentarse inflamación de la vena, infección o trombosis localizadas. Ocasionalmente en estos casos incluso se requerirá valoración médica para definir el manejo de acuerdo con la complicación presentada.",
-        "En ocasiones puede ocurrir un difícil acceso a la vena lo que genera una nueva punción o un hematoma (acumulación de sangre causada por una ruptura de los vasos sanguíneos).",
-        "Al momento de la toma de la muestra puede presentarse: náusea, mareo y sensación de debilidad y en algunos pacientes se puede generar lipotimia que es un desmayo que puede causar o no la pérdida del conocimiento y su recuperación es rápida y completa."
+        "Puede presentarse una discreta hinchazón; estas molestias menores son poco frecuentes y no requieren tratamiento ni medicación específica.",
+        "En el momento de la toma de muestra de sangre por venopunción sentirá un leve dolor tipo pinchazo.",
+        "En casos esporádicos se podrían presentar complicaciones como hematoma y/o dolor leve, los cuales mejorarán espontáneamente o con medidas locales.",
+        "En casos excepcionales, este dolor podría ser más severo y persistente o presentarse inflamación de la vena, infección o trombosis localizadas. Ocasionalmente, en estos casos se requerirá valoración médica para definir el manejo de acuerdo con la complicación presentada.",
+        "En ocasiones puede ocurrir un difícil acceso a la vena, lo que genera una nueva punción o un hematoma (acumulación de sangre causada por una ruptura de los vasos sanguíneos).",
+        "Al momento de la toma de la muestra puede presentarse náusea, mareo y sensación de debilidad, y en algunos pacientes se puede generar lipotimia, que es un desmayo que puede causar o no la pérdida del conocimiento y cuya recuperación es rápida y completa."
       ]
     },
     {
@@ -150,11 +151,11 @@ export const CA_F_14 = {
       "type": "list",
       "indent": 1,
       "items": [
-        "Calidad de la muestra: La calidad de la muestra es crucial para obtener resultados precisos en los análisis de laboratorio. Un acto asistencial deficiente en la toma de muestras puede llevar a muestras contaminadas, deterioradas o mal etiquetadas, lo que puede afectar la validez de los resultados.",
-        "Exactitud de los resultados: Una toma de muestra adecuada garantiza que los resultados de laboratorio reflejen con precisión la condición del paciente. Errores en la toma de muestras pueden llevar a resultados incorrectos, lo que a su vez puede afectar el diagnóstico y tratamiento del paciente.",
-        "Seguridad del paciente: Un acto asistencial deficiente en la toma de muestras puede representar riesgos para la seguridad del paciente, como infecciones asociadas al cuidado de la salud si no se siguen las prácticas adecuadas de asepsia.",
-        "Cumplimiento normativo: Existen normativas y estándares de calidad que regulan la toma de muestras de laboratorio clínico para garantizar la fiabilidad de los resultados. Un acto asistencial deficiente puede resultar en incumplimiento de estas normativas, lo que podría tener implicaciones legales y éticas.",
-        "Experiencia del paciente: La experiencia del paciente también se ve afectada por la calidad de la toma de muestras. Un proceso bien gestionado, con personal capacitado y amable, puede mejorar la experiencia del paciente y su satisfacción con el servicio de laboratorio."
+        "Calidad de la muestra: la calidad de la muestra es crucial para obtener resultados precisos en los análisis de laboratorio. Un acto asistencial deficiente en la toma de muestras puede llevar a muestras contaminadas, deterioradas o mal etiquetadas, lo que puede afectar la validez de los resultados.",
+        "Exactitud de los resultados: una toma de muestra adecuada garantiza que los resultados de laboratorio reflejen con precisión la condición del paciente. Errores en la toma de muestras pueden llevar a resultados incorrectos, lo que a su vez puede afectar el diagnóstico y tratamiento del paciente.",
+        "Seguridad del paciente: un acto asistencial deficiente en la toma de muestras puede representar riesgos para la seguridad del paciente, como infecciones asociadas al cuidado de la salud si no se siguen las prácticas adecuadas de asepsia.",
+        "Cumplimiento normativo: existen normativas y estándares de calidad que regulan la toma de muestras de laboratorio clínico para garantizar la fiabilidad de los resultados. Un acto asistencial deficiente puede resultar en incumplimiento de estas normativas, lo que podría tener implicaciones legales y éticas.",
+        "Experiencia del paciente: la experiencia del paciente también se ve afectada por la calidad de la toma de muestras. Un proceso bien gestionado, con personal capacitado y amable, puede mejorar la experiencia del paciente y su satisfacción con el servicio de laboratorio."
       ]
     },
     {
@@ -163,35 +164,14 @@ export const CA_F_14 = {
     },
     {
       "type": "paragraph",
-      "text": "Una vez recibido el consentimiento informado se entrega archivo para que haga parte integral de la historia clínica del paciente."
+      "text": "Una vez recibido el consentimiento informado, se archiva para que haga parte integral de la historia clínica del paciente."
+    },
+    {
+      "type": "paragraph",
+      "text": "Marco normativo: Ley 1581 de 2012 y Decreto 1074 de 2015 (protección de datos personales).",
+      "emphasis": "italic"
     }
   ],
-  "decision": {
-    "prompt": "¿Autoriza la realización de la toma de muestras?",
-    "accept": {
-      "label": "Acepto",
-      "blocks": [
-        {
-          "type": "note",
-          "text": "Al firmar este documento declaro que he sido informado verbalmente, he leído y entendido la información correspondiente al procedimiento que se me va a realizar, pude formular las preguntas que tenía y encontré las respuestas que me permiten comprender los beneficios, riesgos, efectos. Declaro que soy mayor de edad y en uso pleno de mis facultades doy mi consentimiento y firmo."
-        }
-      ]
-    },
-    "decline": {
-      "label": "No acepto",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Desistimiento"
-        },
-        {
-          "type": "note",
-          "text": "Yo, el (la) abajo firmante, identificado(a) como aparece al pie de mi firma, actuando en nombre propio o como representante legal del paciente, declaro que he sido informado(a) de la naturaleza y riesgos del procedimiento propuesto, manifiesto de forma libre y consciente mi DESISTIMIENTO para su realización, haciéndome responsable de las consecuencias que puedan derivarse de esta decisión."
-        }
-      ]
-    }
-  },
   "fields": [
     {
       "key": "nombre",
@@ -206,6 +186,13 @@ export const CA_F_14 = {
       "input": "number",
       "required": true,
       "placeholder": "Número de identificación"
+    },
+    {
+      "key": "motivo_desistimiento",
+      "label": "Motivo del desistimiento",
+      "input": "text",
+      "required": false,
+      "decision": "decline"
     }
   ],
   "signatures": [
@@ -239,5 +226,31 @@ export const CA_F_14 = {
       "type": "date",
       "label": "Fecha y hora"
     }
-  ]
+  ],
+  "decision": {
+    "prompt": "¿Autoriza la realización de la toma de muestras?",
+    "accept": {
+      "label": "Acepto",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Al firmar este documento declaro que he sido informado verbalmente, he leído y entendido la información correspondiente al procedimiento que se me va a realizar, pude formular las preguntas que tenía y encontré las respuestas que me permiten comprender los beneficios, riesgos, efectos. Declaro que soy mayor de edad y en uso pleno de mis facultades doy mi consentimiento y firmo."
+        }
+      ]
+    },
+    "decline": {
+      "label": "No acepto",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Desistimiento"
+        },
+        {
+          "type": "note",
+          "text": "Yo, el (la) abajo firmante, identificado(a) como aparece al pie de mi firma, actuando en nombre propio, declaro que he sido informado(a) de la naturaleza y riesgos del procedimiento propuesto y manifiesto de forma libre y consciente mi DESISTIMIENTO para su realización, haciéndome responsable de las consecuencias que puedan derivarse de esta decisión."
+        }
+      ]
+    }
+  }
 } as const;

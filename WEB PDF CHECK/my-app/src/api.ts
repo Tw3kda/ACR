@@ -204,3 +204,47 @@ export const suggestPatients = (q: string): Promise<{ items: PatientCard[] }> =>
 
 export const getPdfUrl =(consentId: string, inline: boolean): Promise<{ url: string; filename: string }> =>
   authed(`/consents/${encodeURIComponent(consentId)}/pdf-download-url${inline ? '?inline=1' : ''}`);
+
+/** [from, to) de un día del calendario de este navegador. */
+export function dayRange(day: Date): { from: string; to: string } {
+  const from = new Date(day);
+  from.setHours(0, 0, 0, 0);
+  const to = new Date(from);
+  to.setDate(to.getDate() + 1);
+  return { from: from.toISOString(), to: to.toISOString() };
+}
+
+export type DayPdf = {
+  filename: string;
+  count: number;
+  pages: number;
+  consents: { consent_id: string; form: string | null; timestamp_utc: string }[];
+  pdf_base64: string;
+};
+
+/**
+ * Los consentimientos de un paciente en un día, unidos en un PDF por el
+ * servidor (que registra la descarga de cada uno). Para adjuntarlos de una vez
+ * a la historia clínica.
+ */
+export const getDayPdf = (patientId: string, day: Date): Promise<DayPdf> =>
+  authed('/patients/day-pdf', { method: 'POST', body: JSON.stringify({ patient_id: patientId, ...dayRange(day) }) });
+
+export function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(new ArrayBuffer(bin.length));
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+/** Entrega un archivo generado en el navegador como descarga, con su nombre. */
+export function saveFile(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}

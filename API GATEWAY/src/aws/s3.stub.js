@@ -88,5 +88,10 @@ export async function getPdfBytes(key) {
   return objects.get(key)?.body ?? null;
 }
 
+export async function getPdfObject({ key }) {
+  traceAws({ service: 'S3', operation: 'GetObject', note: 'PDF para la descarga del día', input: { Key: key } });
+  return objects.get(key)?.body ?? null;
+}
+
 /** Solo para las pruebas de humo. */
 export const __store = objects;

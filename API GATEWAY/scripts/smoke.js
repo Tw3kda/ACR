@@ -339,6 +339,7 @@ check('admin: plantilla inválida -> 400', !a.ok && a.status === 400, a);
 a = await admin('borrarTodo');
 check('admin: acción desconocida -> rechazada', !a.ok && a.status === 400, a);
 
+
 r = await call('GET', '/templates', undefined, { claims });
 check('GET /templates: catálogo con CA-F-14 v1.0 y examType', r.status === 200 && r.body.templates?.[0]?.version === '1.0' && r.body.templates[0].examType === 'TOMA_DE_MUESTRAS', r.body);
 r = await call('GET', '/templates');
@@ -400,6 +401,28 @@ check('retirado: sin versión activa -> 404', r.status === 404, r.body);
 const catalogKeys = [...evidenceStub.__store.keys()].filter((k) => k.startsWith('templates/_catalog/'));
 check('cada cambio dejó su foto del catálogo (4)', catalogKeys.length === 4, catalogKeys);
 
+// Formato de menores: pestaña, campos de selección y firmas condicionadas.
+const CA_F_14_M = JSON.parse(readFileSync(new URL('../templates/CA-F-14-M.json', import.meta.url), 'utf8'));
+a = await admin('publishTemplate', { template: CA_F_14_M });
+check('admin: publica el formato de menores CA-F-14-M', a.ok && a.result.created === true, a);
+r = await call('GET', '/templates/CA-F-14-M', undefined, { claims });
+check(
+  'GET /templates/CA-F-14-M: conserva audiencia, selecciones y condiciones',
+  r.status === 200 &&
+    r.body.template?.audience === 'minor' &&
+    r.body.template.fields.find((f) => f.key === 'tipo_decision')?.options?.length === 4 &&
+    r.body.template.signatures.find((s) => s.key === 'representative')?.requiredWhen?.key === 'tipo_decision',
+  r.body.template?.audience
+);
+a = await admin('publishTemplate', {
+  template: {
+    ...CA_F_14_M,
+    code: 'CA-F-14-M-MAL',
+    signatures: CA_F_14_M.signatures.map((s) => (s.requiredWhen ? { ...s, requiredWhen: { key: 'tipo_decision', in: ['Opción que no existe'] } } : s)),
+  },
+});
+check('admin: condición con una opción inexistente -> 400', !a.ok && a.status === 400, a);
+
 // --- 9. rechazo firmado ------------------------------------------------------------------
 const declinedLog = { ...auditPayload(), event_type: 'CONSENT_DECLINED', consent_id: 'CONS-RECHAZO-1', log_id: crypto.randomUUID() };
 r = await call('POST', '/consents', consentBody(declinedLog), { claims });
@@ -411,6 +434,72 @@ r = await call('GET', '/consents/CONS-RECHAZO-1/pdf-download-url', undefined, { 
 check('rechazo: su PDF se puede descargar', r.status === 200 && Boolean(r.body.url), r.body);
 r = await call('POST', '/consents', consentBody({ ...auditPayload(), event_type: 'CONSENT_VIEWED', consent_id: 'CONS-VISTO', log_id: crypto.randomUUID() }), { claims });
 check('POST /consents sigue rechazando tipos sin firma (CONSENT_VIEWED) -> 400', r.status === 400, r.body);
+
+// --- 9b. PDF del día y nombres por cédula -------------------------------------------------
+{
+  const { PDFDocument, StandardFonts } = await import('pdf-lib');
+  const realPdf = async (text) => {
+    const doc = await PDFDocument.create();
+    const page = doc.addPage([300, 200]);
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    // Varias líneas: el servicio rechaza PDF demasiado pequeños.
+    for (let i = 0; i < 12; i++) page.drawText(`${text} · línea ${i + 1}`, { x: 10, y: 185 - i * 15, size: 9, font });
+    return Buffer.from(await doc.save());
+  };
+  const DAY_PATIENT = '79001122';
+  const dayLog = (consentId, at, code, pdf) => ({
+    ...auditPayload(),
+    PK: `PATIENT#${DAY_PATIENT}`,
+    SK: `LOG#${at}#${consentId}`,
+    GSI1_SK: `LOG#${at}`,
+    log_id: crypto.randomUUID(),
+    consent_id: consentId,
+    timestamp_utc: at,
+    subject: { ...auditPayload().subject, patient_id: DAY_PATIENT, full_name: 'Paciente Del Dia' },
+    signature_data: { ...auditPayload().signature_data, pdf_sha256: crypto.createHash('sha256').update(pdf).digest('hex') },
+    template: { code, version: '1.0', title: code },
+  });
+  // Dos el 31 de agosto (hora de Colombia) y uno el día siguiente, que no debe entrar.
+  const docs = [
+    ['CONS-DIA-1', '2026-08-31T15:00:00.000Z', 'CA-F-14'],
+    ['CONS-DIA-2', '2026-08-31T16:30:00.000Z', 'CA-F-15'],
+    ['CONS-DIA-3', '2026-09-01T15:00:00.000Z', 'CA-F-35'],
+  ];
+  for (const [consentId, at, code] of docs) {
+    const pdf = await realPdf(`${consentId} ${code}`);
+    r = await call('POST', '/consents', consentBody(dayLog(consentId, at, code, pdf), pdf.toString('base64')), { claims });
+    check(`PDF del día: se registra ${consentId}`, r.status === 201, r.body);
+  }
+
+  r = await call('GET', '/consents/CONS-DIA-1/pdf-download-url', undefined, { claims: auditor });
+  check('descarga suelta: el archivo se llama cédula_fecha_formato.pdf', r.status === 200 && r.body.filename === '79001122_2026-08-31_CA-F-14.pdf', r.body.filename);
+
+  const day = { patient_id: DAY_PATIENT, from: '2026-08-31T05:00:00.000Z', to: '2026-09-01T05:00:00.000Z' };
+  const before = (await evidenceStub.listAccessRecords(DAY_PATIENT, { limit: 100 })).length;
+  r = await call('POST', '/patients/day-pdf', day, { claims: auditor });
+  const merged = r.status === 200 ? await PDFDocument.load(Buffer.from(r.body.pdf_base64, 'base64')) : null;
+  check(
+    'PDF del día: une solo los del día, en orden de firma, en un PDF',
+    r.status === 200 && r.body.count === 2 && merged?.getPageCount() === 2 &&
+      r.body.consents.map((c) => c.consent_id).join() === 'CONS-DIA-1,CONS-DIA-2',
+    { status: r.status, count: r.body.count, consents: r.body.consents }
+  );
+  check('PDF del día: se llama cédula_fecha.pdf', r.body.filename === '79001122_2026-08-31.pdf', r.body.filename);
+  const access = await evidenceStub.listAccessRecords(DAY_PATIENT, { limit: 100 });
+  const added = access.slice(before);
+  check(
+    'PDF del día: cada consentimiento incluido queda como descargado en el registro de accesos',
+    added.filter((a) => a.event_type === 'PDF_DOWNLOADED' && a.bundle?.filename === '79001122_2026-08-31.pdf').length === 2,
+    added.map((a) => [a.event_type, a.consent_id])
+  );
+
+  r = await call('POST', '/patients/day-pdf', { ...day, from: '2026-08-20T05:00:00.000Z', to: '2026-08-21T05:00:00.000Z' }, { claims: auditor });
+  check('PDF del día: día sin consentimientos -> 404', r.status === 404, r.body);
+  r = await call('POST', '/patients/day-pdf', { ...day, to: '2026-09-10T05:00:00.000Z' }, { claims: auditor });
+  check('PDF del día: rango de más de 48 h -> 400', r.status === 400, r.body);
+  r = await call('POST', '/patients/day-pdf', { ...day, patient_id: '1;DROP' }, { claims: auditor });
+  check('PDF del día: documento inválido -> 400', r.status === 400, r.body);
+}
 
 // --- 10. varios --------------------------------------------------------------
 const noRoute = await call('POST', '/no/existe', {});

@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { getPdfUrl, searchAccess, searchConsents, type AccessItem, type ConsentItem, type PatientCard } from './api';
+import {
+  base64ToBytes,
+  getDayPdf,
+  getPdfUrl,
+  saveFile,
+  searchAccess,
+  searchConsents,
+  type AccessItem,
+  type ConsentItem,
+  type PatientCard,
+} from './api';
 import { formatBytes, formatDate, humanize, isToday, shortHash } from './format';
 import PdfModal from './PdfModal';
 
@@ -42,6 +52,7 @@ export default function PatientView({ patient, onBack }: { patient: PatientCard;
 
   const todays = (consents ?? []).filter((c) => isToday(c.timestamp_utc));
   const older = (consents ?? []).filter((c) => !isToday(c.timestamp_utc));
+  const olderDays = groupByDay(older);
   const name = patient.full_name ?? consents?.find((c) => c.log.subject?.full_name)?.log.subject?.full_name;
 
   return (
@@ -74,7 +85,7 @@ export default function PatientView({ patient, onBack }: { patient: PatientCard;
             <p className="empty">Sin consentimientos para el documento {patient.patient_id}.</p>
           ) : (
             <>
-              <h3 className="group-title">Hoy</h3>
+              <DayHeader title="Hoy" patientId={patient.patient_id} day={new Date()} items={todays} onError={setError} />
               {todays.length > 0 ? (
                 <ConsentList items={todays} onPreview={setPreview} onError={setError} />
               ) : (
@@ -83,10 +94,12 @@ export default function PatientView({ patient, onBack }: { patient: PatientCard;
 
               {older.length > 0 &&
                 (showOlder || todays.length === 0 ? (
-                  <>
-                    <h3 className="group-title">Anteriores</h3>
-                    <ConsentList items={older} onPreview={setPreview} onError={setError} />
-                  </>
+                  olderDays.map(({ day, items }) => (
+                    <div key={day.toDateString()}>
+                      <DayHeader title={formatDay(day)} patientId={patient.patient_id} day={day} items={items} onError={setError} />
+                      <ConsentList items={items} onPreview={setPreview} onError={setError} />
+                    </div>
+                  ))
                 ) : (
                   <button className="btn btn-ghost more" onClick={() => setShowOlder(true)}>
                     Ver consentimientos anteriores ({older.length})
@@ -100,6 +113,68 @@ export default function PatientView({ patient, onBack }: { patient: PatientCard;
 
       {preview && <PdfModal consent={preview} onClose={closePreview} />}
     </>
+  );
+}
+
+/** Consentimientos agrupados por día del calendario de este navegador, del más reciente al más antiguo. */
+function groupByDay(items: ConsentItem[]): { day: Date; items: ConsentItem[] }[] {
+  const groups = new Map<string, { day: Date; items: ConsentItem[] }>();
+  for (const item of items) {
+    if (!item.timestamp_utc) continue;
+    const day = new Date(item.timestamp_utc);
+    day.setHours(0, 0, 0, 0);
+    const key = day.toDateString();
+    if (!groups.has(key)) groups.set(key, { day, items: [] });
+    groups.get(key)!.items.push(item);
+  }
+  return [...groups.values()].sort((a, b) => b.day.getTime() - a.day.getTime());
+}
+
+const formatDay = (day: Date) =>
+  day.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+/**
+ * Título del día y su botón para descargar todos sus consentimientos en un
+ * solo PDF (cédula_fecha.pdf), listo para adjuntar a la historia clínica.
+ */
+function DayHeader({
+  title,
+  patientId,
+  day,
+  items,
+  onError,
+}: {
+  title: string;
+  patientId: string;
+  day: Date;
+  items: ConsentItem[];
+  onError: (m: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const verified = items.filter((c) => c.pdf?.verified === true).length;
+
+  const download = async () => {
+    setBusy(true);
+    onError('');
+    try {
+      const pdf = await getDayPdf(patientId, day);
+      saveFile(new Blob([base64ToBytes(pdf.pdf_base64)], { type: 'application/pdf' }), pdf.filename);
+    } catch (err) {
+      onError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="day-head">
+      <h3 className="group-title">{title}</h3>
+      {verified > 0 && (
+        <button className="btn btn-ghost" disabled={busy} onClick={download} title="Todos los consentimientos de este día en un solo PDF">
+          {busy ? 'Preparando…' : verified === 1 ? 'Descargar el día en un PDF' : `Descargar los ${verified} del día en un PDF`}
+        </button>
+      )}
+    </div>
   );
 }
 

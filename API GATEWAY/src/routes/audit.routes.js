@@ -3,7 +3,7 @@ import { Router } from 'express';
 import config from '../config/env.js';
 import { requireAuth, requireGroup } from '../middleware/auth.js';
 import { storeAuditLog } from '../services/auditService.js';
-import { listPatientsBetween, searchByPatient, suggestPatients } from '../services/queryService.js';
+import { buildPatientDayPdf, listPatientsBetween, searchByPatient, suggestPatients } from '../services/queryService.js';
 
 const router = Router();
 
@@ -65,6 +65,18 @@ router.post(config.routes.patientsSuggest, ...reader, async (req, res, next) => 
   try {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json(await suggestPatients({ q: req.body?.q, ctx: ctxOf(req) }));
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// Todos los consentimientos de un paciente en un día, unidos en un PDF (para
+// adjuntarlos de una vez a la historia clínica). POST: la cédula va en el cuerpo.
+router.post(config.routes.patientDayPdf, ...reader, async (req, res, next) => {
+  try {
+    const { patient_id: patientId, from, to } = req.body ?? {};
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json(await buildPatientDayPdf({ patientId, from, to, ctx: ctxOf(req) }));
   } catch (err) {
     return next(err);
   }

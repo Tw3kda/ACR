@@ -90,6 +90,7 @@ const config = {
     auditSearch: str(raw.PATH_AUDIT_SEARCH, '/audit/search'),
     patientsToday: str(raw.PATH_PATIENTS_TODAY, '/patients/today'),
     patientsSuggest: str(raw.PATH_PATIENTS_SUGGEST, '/patients/suggest'),
+    patientDayPdf: str(raw.PATH_PATIENT_DAY_PDF, '/patients/day-pdf'),
     templates: str(raw.PATH_TEMPLATES, '/templates'),
     template: str(raw.PATH_TEMPLATE, '/templates/:code'),
     pdfDownloadUrl: str(raw.PATH_PDF_DOWNLOAD_URL, '/consents/:consent_id/pdf-download-url'),

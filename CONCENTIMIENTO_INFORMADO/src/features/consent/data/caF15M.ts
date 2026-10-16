@@ -1,0 +1,498 @@
+/**
+ * CA-F-15-M v1.0 — copia de respaldo incluida en el APK.
+ *
+ * GENERADO desde `API GATEWAY/templates/CA-F-15-M.json` (la fuente que se publica en AWS)
+ * por `templates/borradores/build-2026-10.mjs`. No editar a mano: cambiar el JSON,
+ * publicarlo, y regenerar esta copia en la próxima versión del APK. La app solo la
+ * usa si la tablet nunca ha descargado las plantillas (sin conexión desde la instalación).
+ */
+export const CA_F_15_M = {
+  "code": "CA-F-15-M",
+  "version": "1.0",
+  "title": "Consentimiento informado — Frotis faríngeo (menor de edad)",
+  "examType": "FROTIS_FARINGEO",
+  "audience": "minor",
+  "effectiveDate": "2026-10-09",
+  "blocks": [
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "Autorización para el tratamiento de datos personales de niños, niñas y adolescentes y consentimiento"
+    },
+    {
+      "type": "paragraph",
+      "text": "La IPS ACR VITAL LABORAL SAS, identificada con NIT: 901066615, será la responsable del tratamiento y, en tal virtud, podrá recolectar, almacenar y usar los datos personales del paciente menor de edad, como antecedentes personales y familiares, nombres, apellidos, edad, identificación, número de contacto, género, fecha de nacimiento, correo electrónico y otros que fuesen necesarios para el correcto diligenciamiento de la historia clínica y la realización del procedimiento asistencial de toma y procesamiento de muestras de laboratorio clínico."
+    },
+    {
+      "type": "paragraph",
+      "text": "Por tratarse de datos de un niño, niña o adolescente (NNA), su tratamiento solo se realizará cuando responda y respete su interés superior y asegure el respeto de sus derechos fundamentales (artículo 7 de la Ley 1581 de 2012 y artículo 2.2.2.25.2.9 del Decreto 1074 de 2015). La autorización la otorga el representante legal del NNA, previo ejercicio del derecho del menor a ser escuchado; su opinión se valora teniendo en cuenta su madurez, autonomía y capacidad para entender el asunto."
+    },
+    {
+      "type": "paragraph",
+      "text": "Manifestamos que nos informaron que, en caso de recolección de información sensible, como la relativa al estado de salud del NNA, existe el derecho a contestar o no las preguntas que se formulen y a entregar o no los datos solicitados. Entendemos que son datos sensibles aquellos que afectan la intimidad del titular o cuyo uso indebido puede generar discriminación, como el estado de salud, y que serán utilizados únicamente para el adecuado diligenciamiento de la historia clínica en la IPS ACR VITAL LABORAL SAS, bajo reserva."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Derechos del titular"
+    },
+    {
+      "type": "paragraph",
+      "text": "Los derechos del NNA como titular del dato, que podrá ejercer directamente según su madurez o a través de su representante legal, son los previstos en la Constitución y en la Ley 1581 de 2012, especialmente los siguientes:"
+    },
+    {
+      "type": "paragraph",
+      "text": "a) Acceder en forma gratuita a los datos proporcionados que hayan sido objeto de diagnóstico y tratamiento.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "b) Solicitar la actualización y rectificación de su información frente a datos parciales, inexactos, incompletos, fraccionados, que induzcan a error, o a aquellos cuyo tratamiento esté prohibido o no haya sido autorizado.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "c) Solicitar prueba de la autorización otorgada.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "d) Presentar ante la Superintendencia de Industria y Comercio (SIC) quejas por infracciones a lo dispuesto en la normatividad vigente.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "e) Revocar la autorización y/o solicitar la supresión del dato, a menos que exista un deber legal o contractual que haga imperativo conservar la información.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "f) Abstenerse de responder las preguntas sobre datos sensibles o sobre datos de los niños, niñas y adolescentes.",
+      "indent": 1
+    },
+    {
+      "type": "paragraph",
+      "text": "Estos derechos se podrán ejercer a través de los canales o medios dispuestos por la IPS ACR VITAL LABORAL SAS para la atención al público, el correo electrónico: acrvitallaboralsas@gmail.com y en las instalaciones de la IPS CRA 7 # 7-20, Tocancipá."
+    },
+    {
+      "type": "paragraph",
+      "text": "Por todo lo anterior, otorgamos nuestra autorización a la IPS ACR VITAL LABORAL SAS para que trate la información personal del NNA de acuerdo con la Política de Tratamiento de Datos Personales. Manifestamos que la presente autorización nos fue solicitada y puesta de presente antes de entregar los datos y que la suscribimos de forma libre y voluntaria una vez leída en su totalidad."
+    },
+    {
+      "type": "spacer"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "Consentimiento informado frotis faríngeo – paciente menor de edad"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Decisiones en salud del paciente menor de edad (autonomía progresiva)"
+    },
+    {
+      "type": "paragraph",
+      "text": "De acuerdo con la Resolución 309 de 2025 del Ministerio de Salud y Protección Social y la jurisprudencia de la Corte Constitucional (Sentencia C-246 de 2017), los niños, niñas y adolescentes ejercen su autonomía de forma progresiva, según su edad, madurez y el nivel de riesgo del procedimiento:"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "Adolescente de 14 años o más: otorga su propio consentimiento informado, que tiene validez legal. Puede firmarlo sin la presencia de un adulto, según el nivel de riesgo del procedimiento y la valoración de sus habilidades para decidir. Si rechaza de forma informada un procedimiento que no es urgente, su decisión será respetada.",
+        "Menor de 14 años: recibe información clara y acorde con su desarrollo y expresa su asentimiento, que se registra en la historia clínica. Su representante legal otorga el consentimiento sustituto, que siempre debe atender al interés superior del menor. Si el NNA no acepta un procedimiento que no es urgente, no se le obligará; se buscará su comprensión y aceptación sin coerción ni manipulación.",
+        "Clasificación de este procedimiento: la toma de frotis faríngeo es un acto de bajo riesgo (beneficio claro para la salud con riesgo mínimo – Res. 309/2025, num. 3.1.1). En actos de bajo riesgo el NNA puede asumir la decisión según su nivel de desarrollo (num. 4.3); en todo caso se dejará registro de su consentimiento o asentimiento."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "El tipo de decisión se registra en los datos de este documento y la valoración de las habilidades para decidir la registra el profesional (Res. 309/2025, num. 3.6)."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Objetivo procedimiento frotis"
+    },
+    {
+      "type": "paragraph",
+      "text": "Obtener una muestra de la faringe para posterior análisis clínico. Un frotis consiste en la extensión de una muestra de fluido corporal (humano) sobre un portaobjetos para su análisis clínico."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Beneficios procedimiento frotis"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sirve para:"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "Identificar microorganismos que pueden causar una infección en la garganta."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Posibles riesgos y/o complicaciones procedimiento frotis faríngeo"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "Se pueden producir molestias, náuseas y ganas de toser, pero solo duran unos cuantos segundos.",
+        "En niños y niñas pequeños, el movimiento brusco de la cabeza durante la toma puede causar molestia adicional; por ello el representante legal o acompañante podrá ayudar a mantener una posición cómoda y segura, sin uso de la fuerza en procedimientos no urgentes."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Recomendaciones"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "Adecuada posición del paciente, acorde con su edad (sentado; en niños pequeños, en el regazo del acompañante).",
+        "Selección de insumos que cumplan con criterios de calidad.",
+        "Explicar al NNA, antes de iniciar y en lenguaje sencillo, en qué consiste el procedimiento y cuánto dura."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Alternativas al procedimiento de frotis faríngeo"
+    },
+    {
+      "type": "paragraph",
+      "text": "Cultivo faríngeo."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Implicaciones del acto asistencial"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "La IPS ACR VITAL LABORAL SAS mantiene absoluta confidencialidad sobre los resultados; queda una copia de los mismos en el sistema informático, cuyo acceso está protegido para que no pueda ser consultado por personas no autorizadas.",
+        "El procedimiento de frotis faríngeo es la opción comúnmente utilizada para el posterior procesamiento de la muestra, y es un procedimiento seguro siempre y cuando se emplee la técnica correcta y los insumos seguros y confiables.",
+        "El cumplimiento de las recomendaciones dadas por la profesional (bacterióloga) antes, durante y después del procedimiento de frotis faríngeo es de gran importancia para lograr los resultados esperados.",
+        "Es importante que la profesional (bacterióloga) explique todos estos aspectos al paciente y a su representante legal en un lenguaje acorde con la edad del NNA, responda todas sus preguntas y se asegure de que comprendan completamente el procedimiento de frotis, sus beneficios, riesgos/complicaciones y alternativas antes de obtener el consentimiento o asentimiento. El adolescente de 14 años o más tiene derecho a aceptar o rechazar la realización del frotis faríngeo después de recibir toda la información necesaria; en menores de 14 años se tendrá en cuenta su asentimiento."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Marco normativo: Constitución Política, art. 44; Ley 1098 de 2006 – Código de la Infancia y la Adolescencia (arts. 8 y 26); Ley 1581 de 2012 y Decreto 1074 de 2015 (datos personales de NNA); Resolución 309 de 2025 del Ministerio de Salud y Protección Social; Sentencia C-246 de 2017 de la Corte Constitucional.",
+      "emphasis": "italic"
+    }
+  ],
+  "fields": [
+    {
+      "key": "nombre",
+      "label": "Nombres y apellidos del paciente (NNA)",
+      "input": "text",
+      "required": true,
+      "placeholder": "Nombres y apellidos"
+    },
+    {
+      "key": "tipo_documento",
+      "label": "Tipo de documento del paciente",
+      "input": "select",
+      "required": true,
+      "options": [
+        "Registro civil (RC)",
+        "Tarjeta de identidad (TI)",
+        "Otro"
+      ]
+    },
+    {
+      "key": "documento",
+      "label": "N° de documento del paciente",
+      "input": "number",
+      "required": true,
+      "placeholder": "Número de documento"
+    },
+    {
+      "key": "fecha_nacimiento",
+      "label": "Fecha de nacimiento",
+      "input": "date",
+      "required": true
+    },
+    {
+      "key": "edad",
+      "label": "Edad (años cumplidos)",
+      "input": "number",
+      "required": true
+    },
+    {
+      "key": "grupo_edad",
+      "label": "Grupo de edad",
+      "input": "select",
+      "required": true,
+      "options": [
+        "Menor de 14 años",
+        "De 14 a 17 años (adolescente)"
+      ]
+    },
+    {
+      "key": "tipo_decision",
+      "label": "Tipo de decisión",
+      "input": "select",
+      "required": true,
+      "options": [
+        "Consentimiento propio – adolescente de 14 años o más, acompañado por su representante legal",
+        "Consentimiento propio – adolescente de 14 años o más, sin acompañante",
+        "Consentimiento sustituto del representante legal, con asentimiento del NNA (menor de 14 años o sin habilidades para decidir)",
+        "Menor de 14 años con habilidades para decidir, acompañado por su representante legal (acto de bajo riesgo)"
+      ]
+    },
+    {
+      "key": "asentimiento",
+      "label": "Asentimiento del NNA",
+      "input": "select",
+      "required": false,
+      "options": [
+        "Sí asiente",
+        "No asiente"
+      ],
+      "requiredWhen": {
+        "key": "tipo_decision",
+        "in": [
+          "Consentimiento sustituto del representante legal, con asentimiento del NNA (menor de 14 años o sin habilidades para decidir)"
+        ]
+      }
+    },
+    {
+      "key": "representante_nombre",
+      "label": "Representante legal o acudiente (nombres y apellidos)",
+      "input": "text",
+      "required": false,
+      "requiredWhen": {
+        "key": "tipo_decision",
+        "in": [
+          "Consentimiento propio – adolescente de 14 años o más, acompañado por su representante legal",
+          "Consentimiento sustituto del representante legal, con asentimiento del NNA (menor de 14 años o sin habilidades para decidir)",
+          "Menor de 14 años con habilidades para decidir, acompañado por su representante legal (acto de bajo riesgo)"
+        ]
+      }
+    },
+    {
+      "key": "representante_tipo_documento",
+      "label": "Tipo de documento del representante",
+      "input": "select",
+      "required": false,
+      "options": [
+        "Cédula de ciudadanía (CC)",
+        "Cédula de extranjería (CE)",
+        "Otro"
+      ],
+      "requiredWhen": {
+        "key": "tipo_decision",
+        "in": [
+          "Consentimiento propio – adolescente de 14 años o más, acompañado por su representante legal",
+          "Consentimiento sustituto del representante legal, con asentimiento del NNA (menor de 14 años o sin habilidades para decidir)",
+          "Menor de 14 años con habilidades para decidir, acompañado por su representante legal (acto de bajo riesgo)"
+        ]
+      }
+    },
+    {
+      "key": "representante_documento",
+      "label": "N° de documento del representante",
+      "input": "number",
+      "required": false,
+      "requiredWhen": {
+        "key": "tipo_decision",
+        "in": [
+          "Consentimiento propio – adolescente de 14 años o más, acompañado por su representante legal",
+          "Consentimiento sustituto del representante legal, con asentimiento del NNA (menor de 14 años o sin habilidades para decidir)",
+          "Menor de 14 años con habilidades para decidir, acompañado por su representante legal (acto de bajo riesgo)"
+        ]
+      }
+    },
+    {
+      "key": "parentesco",
+      "label": "Parentesco o calidad del representante",
+      "input": "select",
+      "required": false,
+      "options": [
+        "Madre",
+        "Padre",
+        "Tutor / curador",
+        "Otro"
+      ],
+      "requiredWhen": {
+        "key": "tipo_decision",
+        "in": [
+          "Consentimiento propio – adolescente de 14 años o más, acompañado por su representante legal",
+          "Consentimiento sustituto del representante legal, con asentimiento del NNA (menor de 14 años o sin habilidades para decidir)",
+          "Menor de 14 años con habilidades para decidir, acompañado por su representante legal (acto de bajo riesgo)"
+        ]
+      }
+    },
+    {
+      "key": "telefono",
+      "label": "Teléfono de contacto",
+      "input": "number",
+      "required": true
+    },
+    {
+      "key": "correo",
+      "label": "Correo electrónico",
+      "input": "text",
+      "required": false
+    },
+    {
+      "key": "desiste_calidad",
+      "label": "Desiste en calidad de",
+      "input": "select",
+      "required": true,
+      "decision": "decline",
+      "options": [
+        "En nombre propio, como paciente adolescente de 14 años o más",
+        "Como representante legal del paciente menor de edad"
+      ]
+    },
+    {
+      "key": "motivo_desistimiento",
+      "label": "Motivo del desistimiento",
+      "input": "text",
+      "required": false,
+      "decision": "decline"
+    },
+    {
+      "key": "valoracion_habilidades",
+      "label": "Valoración de habilidades para la toma de decisiones (Res. 309/2025, num. 3.6)",
+      "input": "select",
+      "multiple": true,
+      "required": false,
+      "filledBy": "professional",
+      "options": [
+        "Comunica una decisión",
+        "Comprende la información",
+        "Razona sobre riesgos, beneficios y alternativas",
+        "Juzga la decisión según sus valores"
+      ]
+    },
+    {
+      "key": "conclusion_valoracion",
+      "label": "Conclusión de la valoración",
+      "input": "select",
+      "required": true,
+      "filledBy": "professional",
+      "options": [
+        "Puede asumir la decisión",
+        "Requiere consentimiento sustituto del representante legal"
+      ]
+    },
+    {
+      "key": "profesional_nombre",
+      "label": "Nombre del profesional",
+      "input": "text",
+      "required": false,
+      "prefill": "professional.name",
+      "filledBy": "professional"
+    },
+    {
+      "key": "registro_profesional",
+      "label": "Registro profesional",
+      "input": "text",
+      "required": true,
+      "filledBy": "professional"
+    },
+    {
+      "key": "cargo",
+      "label": "Cargo",
+      "input": "text",
+      "required": true,
+      "filledBy": "professional"
+    }
+  ],
+  "signatures": [
+    {
+      "key": "patient",
+      "label": "Firma o huella del paciente (NNA)",
+      "signer": "patient",
+      "required": false,
+      "requiredWhen": {
+        "key": "tipo_decision",
+        "in": [
+          "Consentimiento propio – adolescente de 14 años o más, acompañado por su representante legal",
+          "Consentimiento propio – adolescente de 14 años o más, sin acompañante",
+          "Menor de 14 años con habilidades para decidir, acompañado por su representante legal (acto de bajo riesgo)"
+        ]
+      }
+    },
+    {
+      "key": "representative",
+      "label": "Firma del representante legal o acudiente",
+      "signer": "patient",
+      "required": false,
+      "requiredWhen": {
+        "key": "tipo_decision",
+        "in": [
+          "Consentimiento propio – adolescente de 14 años o más, acompañado por su representante legal",
+          "Consentimiento sustituto del representante legal, con asentimiento del NNA (menor de 14 años o sin habilidades para decidir)",
+          "Menor de 14 años con habilidades para decidir, acompañado por su representante legal (acto de bajo riesgo)"
+        ]
+      }
+    },
+    {
+      "key": "professional",
+      "label": "Firma del profesional que realiza el procedimiento",
+      "signer": "professional",
+      "required": true
+    }
+  ],
+  "footer": [
+    {
+      "type": "signature",
+      "key": "patient"
+    },
+    {
+      "type": "signature",
+      "key": "representative"
+    },
+    {
+      "type": "signature",
+      "key": "professional"
+    },
+    {
+      "type": "date",
+      "label": "Fecha y hora"
+    }
+  ],
+  "decision": {
+    "prompt": "¿Se autoriza la realización del frotis faríngeo?",
+    "accept": {
+      "label": "Acepto",
+      "blocks": [
+        {
+          "type": "note",
+          "text": "Al firmar este documento declaramos que el paciente menor de edad y, cuando aplica, su representante legal, hemos sido informados verbalmente, en un lenguaje claro y acorde con la edad y madurez del NNA; hemos leído y entendido la información correspondiente al procedimiento que se va a realizar; pudimos formular las preguntas que teníamos y encontramos las respuestas que nos permiten comprender sus beneficios, riesgos y efectos. En consecuencia, se otorga el consentimiento o asentimiento según lo marcado y firmamos."
+        }
+      ]
+    },
+    "decline": {
+      "label": "No acepto",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Desistimiento"
+        },
+        {
+          "type": "note",
+          "text": "Yo, quien firma este documento, identificado(a) como aparece al pie de mi firma y actuando en la calidad indicada en el campo «Desiste en calidad de», declaro que he sido informado(a) de la naturaleza y riesgos del procedimiento propuesto y manifiesto de forma libre y consciente mi DESISTIMIENTO para su realización, haciéndome responsable de las consecuencias que puedan derivarse de esta decisión."
+        },
+        {
+          "type": "paragraph",
+          "text": "Nota: si el NNA con habilidades para decidir rechaza de forma informada un procedimiento no urgente, su decisión se respeta aunque el representante legal lo autorice (Res. 309/2025, num. 7.4). Si el NNA sin habilidades para decidir no asiente, no se le obligará y se buscará su comprensión sin coerción (num. 7.1). Si es el representante legal quien desiste y el procedimiento es necesario para la salud del NNA, el profesional lo registrará en la historia clínica y orientará la decisión conforme al interés superior del menor."
+        }
+      ]
+    }
+  }
+} as const;

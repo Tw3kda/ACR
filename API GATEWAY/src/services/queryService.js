@@ -1,6 +1,8 @@
 import config from '../config/env.js';
 import { evidence, s3 } from '../aws/index.js';
-import { badRequest, conflict, notFound } from '../lib/errors.js';
+import { PDFDocument } from 'pdf-lib';
+
+import { badRequest, conflict, notFound, payloadTooLarge } from '../lib/errors.js';
 import { isSafeId } from '../lib/validate.js';
 import logger from '../lib/logger.js';
 import { nameSlug } from '../lib/nameKey.js';
@@ -47,7 +49,10 @@ export async function recordAccess({ patientId, eventType, consentId = null, ctx
   };
   await evidence.putAccessRecord({
     patientId,
-    name: `${stampForKey(at)}_${String(ctx.requestId).slice(0, 8)}`,
+    // Con el consentimiento en el nombre: una misma petición puede registrar
+    // varios accesos en el mismo milisegundo (el PDF del día) y cada uno debe
+    // tener su propia clave de escritura única.
+    name: `${stampForKey(at)}_${String(ctx.requestId).slice(0, 8)}${consentId ? `_${consentId}` : ''}`,
     record,
   });
   return record;
@@ -338,7 +343,7 @@ export async function issuePdfDownloadUrl({ consentId, inline = false, ctx }) {
   const signedUrl = await s3.presignPdfGet({
     bucket: verified.bucket,
     key: verified.key,
-    filename: `${consentId}.pdf`,
+    filename: consentFileName(signed.event.payload, consentId),
     inline,
   });
 
@@ -368,5 +373,113 @@ export async function issuePdfDownloadUrl({ consentId, inline = false, ctx }) {
     filename: signedUrl.filename,
     pdf_sha256: verified.checksum_sha256 ?? null,
     pdf_size_bytes: verified.size_bytes ?? null,
+  };
+}
+
+// --- Nombres de archivo y PDF del día -----------------------------------------------
+
+/**
+ * Fecha civil en Colombia (UTC−5, sin horario de verano): la del día en que se
+ * firmó, que es la que el médico busca. `2026-10-14T03:10Z` → `2026-10-13`.
+ */
+const BOGOTA_OFFSET_MS = -5 * 3600 * 1000;
+const localDate = (iso) => new Date(new Date(iso).getTime() + BOGOTA_OFFSET_MS).toISOString().slice(0, 10);
+
+const safePart = (value) => String(value ?? '').replace(/[^A-Za-z0-9._-]/g, '-').replace(/-+/g, '-');
+
+/**
+ * `1018293847_2026-10-14_CA-F-14.pdf`: empieza por la cédula para que, al
+ * adjuntarlo a la historia clínica (Biofile), baste con escribirla en el
+ * diálogo de archivos.
+ */
+function consentFileName(payload, consentId) {
+  const patient = safePart(payload?.subject?.patient_id || 'sin-documento');
+  const date = payload?.timestamp_utc ? localDate(payload.timestamp_utc) : 'sin-fecha';
+  const form = safePart(payload?.template?.code || consentId);
+  return `${patient}_${date}_${form}.pdf`;
+}
+
+/** El PDF combinado viaja en la respuesta (base64): Lambda limita la respuesta a 6 MB. */
+const MAX_DAY_PDF_BYTES = 4 * 1024 * 1024;
+
+/**
+ * Todos los consentimientos de un paciente firmados en [from, to) unidos en un
+ * solo PDF, en orden de firma, para adjuntarlo de una vez a la historia
+ * clínica. Cada consentimiento incluido queda en el registro de accesos como
+ * descargado, igual que si se hubiera descargado uno por uno. Los originales
+ * no cambian: esto es una copia de entrega.
+ */
+export async function buildPatientDayPdf({ patientId, from, to, ctx }) {
+  const id = String(patientId ?? '').trim();
+  if (!PATIENT_ID.test(id)) {
+    throw badRequest('Escriba un número de documento válido (solo letras y números, de 4 a 20)', {
+      details: { field: 'patient_id' },
+    });
+  }
+  const start = new Date(from);
+  const end = new Date(to);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start || end - start > MAX_RANGE_MS) {
+    throw badRequest('Rango de fechas inválido (máximo 48 horas)', { details: { from, to } });
+  }
+
+  // Los consentimientos del paciente, del más reciente al más antiguo; se leen
+  // los de la ventana y se ordenan por la hora de firma de la tableta.
+  const ids = await consentIdsForPatient(id, config.audit.searchMaxItems);
+  const docs = [];
+  for (const consentId of ids) {
+    const events = await evidence.listEvents(consentId);
+    const signed = events.find((e) => e.event.event_type === 'CONSENT_SIGNED' || e.event.event_type === 'CONSENT_DECLINED');
+    const at = signed?.event.payload?.timestamp_utc;
+    if (!at || new Date(at) < start || new Date(at) >= end) continue;
+    const verified = events.find((e) => e.event.event_type === 'PDF_VERIFIED')?.event.payload;
+    // Un PDF sin verificar no se entrega, ni suelto ni dentro del combinado.
+    if (verified?.verified !== true || !verified.key) continue;
+    docs.push({ consentId, at, payload: signed.event.payload, verified });
+  }
+  if (docs.length === 0) {
+    throw notFound('Este paciente no tiene consentimientos con PDF verificado en ese día');
+  }
+  docs.sort((a, b) => (a.at < b.at ? -1 : 1));
+
+  const merged = await PDFDocument.create();
+  let pages = 0;
+  for (const doc of docs) {
+    const bytes = await s3.getPdfObject({ bucket: doc.verified.bucket, key: doc.verified.key });
+    if (!bytes) throw notFound(`No se encontró el PDF de ${doc.consentId}`);
+    const source = await PDFDocument.load(bytes);
+    const copied = await merged.copyPages(source, source.getPageIndices());
+    copied.forEach((page) => merged.addPage(page));
+    pages += copied.length;
+  }
+  merged.setTitle(`Consentimientos ${id} ${localDate(docs[0].at)}`);
+  merged.setProducer('ACR Consentimiento Digital');
+  const out = Buffer.from(await merged.save());
+  if (out.length > MAX_DAY_PDF_BYTES) {
+    throw payloadTooLarge('Los consentimientos de ese día son demasiado grandes para un solo archivo: descárguelos uno por uno');
+  }
+
+  const filename = `${safePart(id)}_${localDate(docs[0].at)}.pdf`;
+  for (const doc of docs) {
+    await recordAccess({
+      patientId: id,
+      eventType: 'PDF_DOWNLOADED',
+      consentId: doc.consentId,
+      ctx,
+      extra: {
+        pdf_key: doc.verified.key,
+        pdf_sha256: doc.verified.checksum_sha256 ?? null,
+        // Descargado como parte del PDF del día, con los demás de esta lista.
+        bundle: { filename, consents: docs.map((d) => d.consentId) },
+      },
+    });
+  }
+
+  logger.info('PDF del día', { operator_id: ctx.operatorId, count: docs.length, pages, bytes: out.length, request_id: ctx.requestId });
+  return {
+    filename,
+    count: docs.length,
+    pages,
+    consents: docs.map((d) => ({ consent_id: d.consentId, form: d.payload?.template?.code ?? null, timestamp_utc: d.at })),
+    pdf_base64: out.toString('base64'),
   };
 }

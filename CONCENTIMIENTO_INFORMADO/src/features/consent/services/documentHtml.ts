@@ -3,11 +3,17 @@ import {
   formatDocumentDateTime,
   formatTemplateDate,
 } from '@/features/consent/services/documentDate';
+import { isFieldVisible, isSignatureRequired } from '@/features/consent/services/fieldRules';
 import type {
   ConsentBlock,
+  ConsentField,
   ConsentSubmission,
   ConsentTemplate,
 } from '@/features/consent/types/consent';
+
+/** Up to this many fields fit in one strip across the top; more go in a grid. */
+const MAX_STRIP_FIELDS = 3;
+const GRID_COLUMNS = 2;
 
 const INDENT_STEP_PX = 24;
 
@@ -75,22 +81,56 @@ function headerToHtml(template: ConsentTemplate): string {
     </table>`;
 }
 
-/** Patient data across the top — one horizontal strip, label above value. */
-function fieldsToHtml(template: ConsentTemplate, submission: ConsentSubmission): string {
-  if (template.fields.length === 0) return '';
-
-  const width = (100 / template.fields.length).toFixed(2);
-  const cells = template.fields
-    .map(
-      (field) => `
+function fieldCell(field: ConsentField, submission: ConsentSubmission, width: string): string {
+  const value = submission.values[field.key] ?? '';
+  return `
         <td class="pd-cell" style="width:${width}%">
           <div class="pd-label">${escapeHtml(field.label.toUpperCase())}</div>
-          <div class="pd-value">${escapeHtml(submission.values[field.key] ?? '')}</div>
-        </td>`
-    )
-    .join('');
+          <div class="pd-value${value.length > 40 ? ' pd-value-long' : ''}">${escapeHtml(value || '—')}</div>
+        </td>`;
+}
 
-  return `<table class="patient-data"><tr>${cells}</tr></table>`;
+/**
+ * Label-above-value cells: one strip when they fit (the adult forms' name and
+ * ID), otherwise a two-column grid (the minors' forms carry a dozen).
+ */
+function fieldsTable(fields: ConsentField[], submission: ConsentSubmission): string {
+  if (fields.length === 0) return '';
+
+  if (fields.length <= MAX_STRIP_FIELDS) {
+    const width = (100 / fields.length).toFixed(2);
+    return `<table class="patient-data"><tr>${fields.map((f) => fieldCell(f, submission, width)).join('')}</tr></table>`;
+  }
+
+  const width = (100 / GRID_COLUMNS).toFixed(2);
+  const rows: string[] = [];
+  for (let i = 0; i < fields.length; i += GRID_COLUMNS) {
+    const row = fields.slice(i, i + GRID_COLUMNS);
+    const cells = row.map((f) => fieldCell(f, submission, width)).join('');
+    const filler = row.length < GRID_COLUMNS ? `<td class="pd-cell" style="width:${width}%"></td>` : '';
+    rows.push(`<tr>${cells}${filler}</tr>`);
+  }
+  return `<table class="patient-data">${rows.join('')}</table>`;
+}
+
+/** Patient data across the top: what the patient side filled in before reading on. */
+function fieldsToHtml(template: ConsentTemplate, submission: ConsentSubmission): string {
+  return fieldsTable(
+    template.fields.filter((f) => (f.filledBy ?? 'patient') === 'patient' && !f.decision),
+    submission
+  );
+}
+
+/**
+ * After the text, before the signatures: what belongs to the answer given
+ * (the reason for declining) and what the professional recorded.
+ */
+function closingFieldsToHtml(template: ConsentTemplate, submission: ConsentSubmission): string {
+  const decision = submission.decision ?? null;
+  const fields = template.fields.filter(
+    (f) => isFieldVisible(f, decision) && (f.decision || f.filledBy === 'professional')
+  );
+  return fields.length ? `<div class="closing-fields">${fieldsTable(fields, submission)}</div>` : '';
 }
 
 /** The closing strip: signatures, identifying data and the date, all in one row. */
@@ -105,9 +145,14 @@ function footerToHtml(template: ConsentTemplate, submission: ConsentSubmission):
       if (cell.type === 'signature') {
         const slot = template.signatures.find((s) => s.key === cell.key);
         const dataUrl = submission.signatures[cell.key];
+        // A signature that the case did not call for (e.g. the representative
+        // of a 16-year-old signing alone) says so instead of an empty line.
+        const notApplicable = !dataUrl && slot && !isSignatureRequired(slot, submission.values);
         content = dataUrl
           ? `<img class="fc-signature" src="${dataUrl}" alt="" />`
-          : '<div class="fc-blank"></div>';
+          : notApplicable
+            ? '<div class="fc-text fc-na">No aplica</div>'
+            : '<div class="fc-blank"></div>';
         label = slot?.label ?? '';
       } else if (cell.type === 'field') {
         const field = template.fields.find((f) => f.key === cell.key);
@@ -175,6 +220,9 @@ export function buildConsentHtml(
                   color: #4e6870; margin-bottom: 3px; }
       .pd-value { font-size: 13px; font-weight: 700; color: #12212b;
                   line-height: 1.25; word-wrap: break-word; }
+      .pd-value-long { font-size: 10.5px; }
+      .closing-fields { margin-top: 18px; }
+      .fc-na { font-weight: 400; color: #4e6870; }
 
       table.footer-row { width: 100%; margin-top: 34px; border-collapse: collapse;
                          table-layout: fixed; }
@@ -201,6 +249,8 @@ export function buildConsentHtml(
     ${fieldsToHtml(template, submission)}
 
     ${template.blocks.map(blockToHtml).join('\n')}
+
+    ${closingFieldsToHtml(template, submission)}
 
     ${footerToHtml(template, submission)}
   </body>

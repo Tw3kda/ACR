@@ -296,6 +296,15 @@ resource "aws_apigatewayv2_route" "patients_suggest" {
   authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
 }
 
+# PDF del día de un paciente: une sus consentimientos y registra cada descarga.
+resource "aws_apigatewayv2_route" "patient_day_pdf" {
+  api_id             = aws_apigatewayv2_api.http_api.id
+  route_key          = "POST /patients/day-pdf"
+  target             = local.integracion
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+}
+
 resource "aws_apigatewayv2_route" "consent_pdf_download_url" {
   api_id             = aws_apigatewayv2_api.http_api.id
   route_key          = "GET /consents/{consent_id}/pdf-download-url"

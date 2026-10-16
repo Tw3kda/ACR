@@ -11,7 +11,8 @@ import { useConsentDraft } from '@/features/consent/store/consentDraftStore';
 export default function ConsentHandoffScreen() {
   const { code } = useLocalSearchParams<{ code: string }>();
   const router = useRouter();
-  const { template } = useConsentDraft();
+  const { templates } = useConsentDraft();
+  const codes = templates.map((form) => form.code);
 
   return (
     <View style={styles.container}>
@@ -22,7 +23,8 @@ export default function ConsentHandoffScreen() {
       <Text style={styles.title}>Consentimiento diligenciado</Text>
       <Text style={styles.body}>
         Sus datos y su firma quedaron registrados
-        {template ? ` en el documento ${template.code}` : ''}.
+        {codes.length === 1 ? ` en el documento ${codes[0]}` : ''}
+        {codes.length > 1 ? ` en los ${codes.length} documentos (${codes.join(', ')})` : ''}.
       </Text>
 
       <View style={styles.instruction}>

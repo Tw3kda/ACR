@@ -1,0 +1,362 @@
+{
+  "code": "LAB-F-VIH",
+  "version": "1.0",
+  "title": "Consentimiento informado de virus de inmunodeficiencia humana (VIH)",
+  "examType": "PRUEBA_VIH",
+  "audience": "adult",
+  "effectiveDate": "2026-10-09",
+  "blocks": [
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Macroproceso de prestación de servicios asistenciales · Proceso de apoyo diagnóstico · Subproceso de laboratorio clínico"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "II. Prueba voluntaria y confidencial"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "La prueba es voluntaria y confidencial; no se realizará sin el consentimiento del paciente.",
+        "Confidencialidad del resultado: no se revelará a terceros sin la autorización del paciente. El equipo de salud promoverá la comunicación con una persona de confianza si el paciente lo desea.",
+        "Sospecha de violencia sexual: ante sospecha de violencia sexual, se activará la ruta de atención integral a víctimas de violencia sexual de la IPS y la notificación obligatoria correspondiente.",
+        "La prueba se acompaña de asesoría antes y después de su realización, en lenguaje claro."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "III. Información"
+    },
+    {
+      "type": "paragraph",
+      "text": "Yo, identificado(a) como aparece al pie de mi firma, por medio del presente documento, de manera expresa, libre y voluntaria, manifiesto que el profesional que realiza la asesoría me ha explicado la necesidad de practicar las pruebas señaladas en el campo «Pruebas a realizar» para detectar infección por el virus de la inmunodeficiencia humana (VIH), por la indicación registrada, y que he recibido información sobre los siguientes aspectos:"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "1. ¿Qué es el VIH y qué es el SIDA?"
+    },
+    {
+      "type": "paragraph",
+      "text": "El VIH es un virus que afecta el sistema inmunitario (las defensas del cuerpo), de tal manera que la persona se vuelve más propensa a enfermarse. El SIDA es la etapa avanzada de la infección cuando esta no recibe tratamiento."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "2. Propósito del examen y tipos de prueba"
+    },
+    {
+      "type": "paragraph",
+      "text": "La prueba presuntiva (prueba rápida o ELISA) se utiliza para precisar si una persona puede estar infectada con el VIH, mediante la detección en sangre de anticuerpos (defensas producidas por el organismo) contra ese virus. Si el resultado es reactivo, se requiere una prueba confirmatoria."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "3. Condiciones de riesgo para adquirir la infección"
+    },
+    {
+      "type": "paragraph",
+      "text": "Relaciones sexuales sin protección; compartir agujas o material cortopunzante contaminado (por ejemplo, para consumir drogas inyectables, tatuajes o perforaciones); contacto con sangre no segura; y transmisión de la madre al hijo durante el embarazo, el parto o la lactancia."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "4. Confiabilidad y limitaciones de la prueba"
+    },
+    {
+      "type": "paragraph",
+      "text": "La prueba es realizada por personal idóneo e incluye asesoría y acompañamiento. Existe un «periodo de ventana» en el que, a pesar de existir la infección, la prueba puede salir negativa; por ello, según el riesgo, puede indicarse repetirla."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "5. Procedimiento de la toma"
+    },
+    {
+      "type": "paragraph",
+      "text": "Antes de realizar la prueba se explica el procedimiento, que consiste en obtener una muestra de sangre: se limpia el área para eliminar las bacterias, se coloca el torniquete, se punza con una aguja y se extrae una pequeña muestra de sangre en un tubo (o una gota, en la prueba rápida). Luego se retira la aguja y se cubre el sitio de punción."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "6. Consecuencias en caso de no aceptar"
+    },
+    {
+      "type": "paragraph",
+      "text": "Al no tomar la muestra no se sabrá si el paciente tiene la infección por VIH; en caso de tenerla, se retrasaría su tratamiento y se mantendría el riesgo de transmisión a otras personas, incluido el hijo(a) en caso de embarazo."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "7. Riesgos de la toma de muestra"
+    },
+    {
+      "type": "paragraph",
+      "text": "Puede sentir molestia, ardor o dolor leve en el sitio de punción y, en algunos casos, quedar un morado (equimosis)."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "8. Implicaciones y consecuencias de un resultado anormal"
+    },
+    {
+      "type": "paragraph",
+      "text": "Si el resultado es reactivo, se realizará la prueba confirmatoria. Si esta es positiva, significa que existe infección por VIH y el paciente será orientado para su atención y tratamiento a través de su EPS; si es negativa, no hay evidencia en este momento de la infección."
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "IV. Beneficios"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "Si hay infección, se puede dar tratamiento efectivo que retrasa el desarrollo de la enfermedad y se puede prevenir el contagio a otros. También permite tomar precauciones con la sangre y durante las relaciones sexuales, protegiéndose a sí mismo y a los demás. En caso de embarazo, el tratamiento previene la transmisión de la infección al hijo(a).",
+        "Desventajas: la prueba puede generar miedo, estrés, angustia o ansiedad mientras se conoce el resultado; por ello se brinda asesoría antes y después de la prueba."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "V. Riesgos"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "Algunas personas, cuando se les informa que tienen anticuerpos contra el VIH (resultado reactivo), pueden presentar fuertes reacciones emocionales, incluyendo ansiedad y depresión. También pueden ser objeto de discriminación o rechazo por otras personas e instituciones; por ello la IPS garantiza la confidencialidad del resultado y orienta hacia apoyo psicosocial cuando se requiera."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "VI. Alternativa"
+    },
+    {
+      "type": "list",
+      "indent": 1,
+      "items": [
+        "Ninguna."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "VII. Confidencialidad del resultado"
+    },
+    {
+      "type": "paragraph",
+      "text": "El paciente autoriza que el resultado sea conocido únicamente por quienes se indican en el campo «Resultado conocido por»."
+    },
+    {
+      "type": "paragraph",
+      "text": "El consentimiento informado es la manifestación voluntaria y consciente del paciente por la que autoriza un determinado procedimiento o tratamiento propuesto, con base en información comprensible, suficiente y veraz sobre su propósito, riesgos, molestias, efectos secundarios y consecuencias en caso de no aceptar. En este caso, el procedimiento es una prueba de laboratorio para detectar la infección por VIH."
+    },
+    {
+      "type": "paragraph",
+      "text": "Marco normativo: Ley 972 de 2005 (atención de la población con VIH/SIDA); Ley 1581 de 2012 y Decreto 1074 de 2015 (protección de datos personales).",
+      "emphasis": "italic"
+    }
+  ],
+  "fields": [
+    {
+      "key": "nombre",
+      "label": "Nombre del paciente",
+      "input": "text",
+      "required": true,
+      "placeholder": "Nombres y apellidos"
+    },
+    {
+      "key": "cedula",
+      "label": "Cédula del paciente",
+      "input": "number",
+      "required": true,
+      "placeholder": "Número de identificación"
+    },
+    {
+      "key": "telefono",
+      "label": "Teléfono de contacto",
+      "input": "number",
+      "required": true
+    },
+    {
+      "key": "pruebas",
+      "label": "Pruebas a realizar",
+      "input": "select",
+      "multiple": true,
+      "required": true,
+      "options": [
+        "Prueba presuntiva (prueba rápida / ELISA)",
+        "Prueba confirmatoria (según algoritmo diagnóstico vigente)"
+      ]
+    },
+    {
+      "key": "indicacion",
+      "label": "Indicación de la solicitud",
+      "input": "select",
+      "multiple": true,
+      "required": true,
+      "options": [
+        "Antecedentes de riesgo",
+        "Solicitud voluntaria",
+        "Accidente con riesgo biológico",
+        "Embarazo",
+        "Manifestaciones clínicas sugestivas de infección por VIH",
+        "Sospecha de violencia sexual"
+      ]
+    },
+    {
+      "key": "resultado_conocido_por",
+      "label": "Resultado conocido por",
+      "input": "select",
+      "multiple": true,
+      "required": true,
+      "options": [
+        "Únicamente el paciente",
+        "Otra persona de confianza"
+      ]
+    },
+    {
+      "key": "persona_confianza",
+      "label": "Nombre de la persona de confianza",
+      "input": "text",
+      "required": false,
+      "requiredWhen": {
+        "key": "resultado_conocido_por",
+        "in": [
+          "Otra persona de confianza"
+        ]
+      }
+    },
+    {
+      "key": "testigo_nombre",
+      "label": "Nombre del testigo",
+      "input": "text",
+      "required": false
+    },
+    {
+      "key": "testigo_documento",
+      "label": "Documento del testigo",
+      "input": "number",
+      "required": false
+    },
+    {
+      "key": "motivo_desistimiento",
+      "label": "Motivo por el que no acepta",
+      "input": "text",
+      "required": false,
+      "decision": "decline"
+    },
+    {
+      "key": "hc_numero",
+      "label": "Historia clínica N°",
+      "input": "text",
+      "required": false,
+      "filledBy": "professional"
+    },
+    {
+      "key": "profesional_nombre",
+      "label": "Nombre del profesional",
+      "input": "text",
+      "required": false,
+      "prefill": "professional.name",
+      "filledBy": "professional"
+    },
+    {
+      "key": "registro_profesional",
+      "label": "Registro profesional",
+      "input": "text",
+      "required": true,
+      "filledBy": "professional"
+    },
+    {
+      "key": "cargo",
+      "label": "Cargo",
+      "input": "text",
+      "required": true,
+      "filledBy": "professional"
+    }
+  ],
+  "signatures": [
+    {
+      "key": "patient",
+      "label": "Firma del paciente",
+      "signer": "patient",
+      "required": true
+    },
+    {
+      "key": "witness",
+      "label": "Firma del testigo (opcional)",
+      "signer": "patient",
+      "required": false
+    },
+    {
+      "key": "professional",
+      "label": "Firma del profesional que realiza la asesoría",
+      "signer": "professional",
+      "required": true
+    }
+  ],
+  "footer": [
+    {
+      "type": "signature",
+      "key": "patient"
+    },
+    {
+      "type": "signature",
+      "key": "witness"
+    },
+    {
+      "type": "signature",
+      "key": "professional"
+    },
+    {
+      "type": "date",
+      "label": "Fecha y hora"
+    }
+  ],
+  "decision": {
+    "prompt": "¿Autoriza la toma de muestras y la realización de las pruebas señaladas?",
+    "accept": {
+      "label": "Autorizo",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "VIII. Autorización"
+        },
+        {
+          "type": "note",
+          "text": "Como resultado de la información recibida, manifiesto que AUTORIZO la toma de muestras y la realización de las pruebas señaladas en el presente documento."
+        },
+        {
+          "type": "note",
+          "text": "Al firmar este documento declaro que he sido informado verbalmente, he leído y entendido la información correspondiente al procedimiento que se me va a realizar, pude formular las preguntas que tenía y encontré las respuestas que me permiten comprender los beneficios, riesgos y efectos. Declaro que soy mayor de edad y en uso pleno de mis facultades."
+        }
+      ]
+    },
+    "decline": {
+      "label": "No acepto",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "IX. Disentimiento"
+        },
+        {
+          "type": "note",
+          "text": "NO ACEPTO la realización del procedimiento descrito. Con este documento certifico que he sido informado(a) acerca de la importancia del procedimiento para la salud del paciente, sus beneficios y posibles riesgos; se me permitió aclarar dudas y conozco las posibles consecuencias de no aceptar su realización. A pesar de esto, no acepto el procedimiento."
+        },
+        {
+          "type": "note",
+          "text": "Al firmar este documento declaro que he sido informado verbalmente, he leído y entendido la información correspondiente al procedimiento que se me va a realizar, pude formular las preguntas que tenía y encontré las respuestas que me permiten comprender los beneficios, riesgos y efectos. Declaro que soy mayor de edad y en uso pleno de mis facultades."
+        }
+      ]
+    }
+  }
+}

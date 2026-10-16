@@ -162,6 +162,9 @@ mark { background: var(--amber-100); color: inherit; border-radius: 2px; padding
 /* Paciente */
 .back { justify-self: start; padding-left: 0; }
 .group-title { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-muted); margin: 16px 0 4px; }
+.day-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.day-head .group-title { margin: 8px 0 4px; }
+.section-actions { display: flex; align-items: center; gap: 12px; }
 .more { margin-top: 12px; }
 
 /* Vista previa del PDF */

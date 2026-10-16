@@ -10,73 +10,109 @@ import {
 
 import type { ConsentSubmission } from '@/features/consent/services/consentSubmitService';
 import { getConsentTemplate } from '@/features/consent/services/consentRepository';
+import {
+  fieldsFilledBy,
+  isFieldRequired,
+  isSignatureRequired,
+} from '@/features/consent/services/fieldRules';
 import type { SignatureBiometrics } from '@/features/consent/services/signatureBiometrics';
-import type { ConsentTemplate, DecisionChoice, SignerRole } from '@/features/consent/types/consent';
+import type {
+  ConsentField,
+  ConsentTemplate,
+  DecisionChoice,
+  SignatureSlot,
+  SignerRole,
+} from '@/features/consent/types/consent';
 import { createConsentId } from '@/services/ids';
 import { useAuth } from '@/store/authStore';
 
 /**
- * Holds the consent being filled while the user moves through
+ * Holds the consents being filled while the user moves through
  * fill → preview → handoff → professional signature → done.
+ *
+ * One session can cover several forms at once: the patient reads all of them,
+ * answers once, types their data once and signs once; at the end each form
+ * becomes its own PDF and its own audit record, all with the same data and
+ * signatures. A single form is just a session of one.
  *
  * Signature PNGs are far too large to pass as route params, so the flow's
  * screens read and write this shared draft instead. It lives in the consent
  * route group's layout, so leaving the group discards it.
  */
 
-/** What the audit log records about how the patient read the document. */
+/** What the audit log records about how the patient read the documents. */
 export type ReadingMetrics = {
   timeSpentReadingSec: number;
   hasScrolledToBottom: boolean;
 };
 
-/** Outcome of filing this consent (log + PDF) with the backend, for the closing screen. */
+/** Outcome of filing one consent (log + PDF) with the backend, for the closing screen. */
 export type SubmissionState = ConsentSubmission;
+
+/** The accept / decline question shown once for the whole session. */
+export type DecisionStep = {
+  prompt: string;
+  acceptLabel: string;
+  declineLabel: string;
+};
+
+/** Route param for a session: the selected form codes, comma-separated. */
+export const SESSION_CODES_SEPARATOR = ',';
+export const sessionKey = (codes: string[]) => codes.join(SESSION_CODES_SEPARATOR);
+export const parseSessionKey = (key: string | undefined) =>
+  (key ?? '').split(SESSION_CODES_SEPARATOR).filter(Boolean);
 
 type ConsentDraftState = {
   /**
-   * The document as it will be signed: the form, plus the accept or decline
-   * text once the patient has chosen. Everything downstream (preview, PDF,
-   * audit log) uses this one.
+   * The documents as they will be signed: each form, plus its own accept or
+   * decline text once the patient has chosen. Everything downstream (preview,
+   * PDF, audit log) uses these.
    */
-  template: ConsentTemplate | null;
-  /** The form exactly as published, without any decision text. */
-  baseTemplate: ConsentTemplate | null;
-  /** The patient's answer; null until chosen (or when the form has no decision step). */
+  templates: ConsentTemplate[];
+  /** The forms exactly as published, without any decision text. */
+  baseTemplates: ConsentTemplate[];
+  /** Codes of the loaded session, in order (the route param it was loaded from). */
+  loadedKey: string | null;
+  /** The single question covering every form that has a decision step; null if none has. */
+  decisionStep: DecisionStep | null;
+  /** The patient's answer; null until chosen (or when no form has a decision step). */
   decision: DecisionChoice | null;
   setDecision: (choice: DecisionChoice | null) => void;
   /**
-   * Identifies this signing session across the PDF, the audit log and the
-   * flow's screens. Minted when the template loads, because the log's sort key
-   * needs it and the device may be offline when the consent is signed.
+   * One id per form, aligned with `templates`. Minted when the forms load,
+   * because the log's sort key needs it and the device may be offline when
+   * the consents are signed.
    */
-  consentId: string | null;
+  consentIds: string[];
+  /** Fields of all forms, de-duplicated by key: the patient types each one once. */
+  fields: ConsentField[];
+  /** Signature slots of all forms, de-duplicated by key: each signer signs each slot once. */
+  signatureSlots: SignatureSlot[];
   values: Record<string, string>;
   signatures: Record<string, string>;
   /** Stroke capture per signature key — the log's `biometrics_json`. */
   biometrics: Record<string, SignatureBiometrics>;
   /**
-   * Local URI of the generated PDF. Kept here rather than passed as a route
-   * param: under Expo Go the cache path contains percent-encoded segments
-   * (`…/ExperienceData/%2540anonymous%252Fslug/…`), and round-tripping that
-   * through the router's URL encoding corrupts it into a path that no longer
-   * exists — which is what made expo-sharing reject it.
+   * Local URI of each generated PDF, aligned with `templates`. Kept here
+   * rather than passed as a route param: under Expo Go the cache path contains
+   * percent-encoded segments (`…/ExperienceData/%2540anonymous%252Fslug/…`),
+   * and round-tripping that through the router's URL encoding corrupts it into
+   * a path that no longer exists — which is what made expo-sharing reject it.
    */
-  generatedPdfUri: string | null;
-  /** Set once the audit log for this consent has been handed to the service. */
-  submission: SubmissionState | null;
-  /** Set once the signed PDF has been offered to S3. */
+  generatedPdfUris: (string | null)[];
+  /** Filing outcome of each consent, aligned with `templates`; null until known. */
+  submissions: (SubmissionState | null)[];
   isLoading: boolean;
   error: string | null;
-  loadTemplate: (code: string) => Promise<void>;
+  loadTemplates: (codes: string[]) => Promise<void>;
   setValue: (key: string, value: string) => void;
   setSignature: (key: string, dataUrl: string | null) => void;
   setBiometrics: (key: string, biometrics: SignatureBiometrics | null) => void;
-  setGeneratedPdfUri: (uri: string) => void;
-  setSubmission: (submission: SubmissionState | null) => void;
-  /** Called when the patient's scroll reaches the end of the document. */
+  setGeneratedPdfUris: (uris: string[]) => void;
+  setSubmission: (index: number, submission: SubmissionState | null) => void;
+  /** Called when the patient's scroll reaches the end of the documents. */
   markScrolledToBottom: () => void;
-  /** Stops the reading clock — the patient has confirmed the document. */
+  /** Stops the reading clock — the patient has confirmed the documents. */
   markReadingComplete: () => void;
   /** Snapshot of the reading metrics for the audit log. */
   getReadingMetrics: () => ReadingMetrics;
@@ -95,68 +131,110 @@ export function useConsentDraft(): ConsentDraftState {
   return ctx;
 }
 
+/** First occurrence of each key wins: the forms share fields such as name and ID. */
+function uniqueByKey<T extends { key: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  return items.filter((item) => (seen.has(item.key) ? false : (seen.add(item.key), true)));
+}
+
+/**
+ * With one form, its own question. With several, a single question for all of
+ * them — the answer applies to every form that has a decision step.
+ */
+function buildDecisionStep(forms: ConsentTemplate[]): DecisionStep | null {
+  const withDecision = forms.filter((form) => form.decision);
+  const first = withDecision[0]?.decision;
+  if (!first) return null;
+  if (forms.length === 1) {
+    return { prompt: first.prompt, acceptLabel: first.accept.label, declineLabel: first.decline.label };
+  }
+  return {
+    prompt: `¿Autoriza la realización de los procedimientos descritos en estos ${forms.length} documentos?`,
+    acceptLabel: first.accept.label,
+    declineLabel: first.decline.label,
+  };
+}
+
 export function ConsentDraftProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [baseTemplate, setTemplate] = useState<ConsentTemplate | null>(null);
+  const [baseTemplates, setBaseTemplates] = useState<ConsentTemplate[]>([]);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [decision, setDecisionState] = useState<DecisionChoice | null>(null);
 
-  const template = useMemo<ConsentTemplate | null>(() => {
-    if (!baseTemplate?.decision || !decision) return baseTemplate;
-    return { ...baseTemplate, blocks: [...baseTemplate.blocks, ...baseTemplate.decision[decision].blocks] };
-  }, [baseTemplate, decision]);
-  const [consentId, setConsentId] = useState<string | null>(null);
+  const templates = useMemo<ConsentTemplate[]>(
+    () =>
+      baseTemplates.map((form) =>
+        form.decision && decision
+          ? { ...form, blocks: [...form.blocks, ...form.decision[decision].blocks] }
+          : form
+      ),
+    [baseTemplates, decision]
+  );
+  const decisionStep = useMemo(() => buildDecisionStep(baseTemplates), [baseTemplates]);
+  const fields = useMemo(() => uniqueByKey(baseTemplates.flatMap((form) => form.fields)), [baseTemplates]);
+  const signatureSlots = useMemo(
+    () => uniqueByKey(baseTemplates.flatMap((form) => form.signatures)),
+    [baseTemplates]
+  );
+
+  const [consentIds, setConsentIds] = useState<string[]>([]);
   const [values, setValues] = useState<Record<string, string>>({});
   const [signatures, setSignatures] = useState<Record<string, string>>({});
   const [biometrics, setBiometricsState] = useState<Record<string, SignatureBiometrics>>({});
-  const [generatedPdfUri, setGeneratedPdfUri] = useState<string | null>(null);
-  const [submission, setSubmission] = useState<SubmissionState | null>(null);
+  const [generatedPdfUris, setGeneratedPdfUris] = useState<(string | null)[]>([]);
+  const [submissions, setSubmissions] = useState<(SubmissionState | null)[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Reading metrics live in refs: they change on every scroll event and on
-  // every tick of the clock, and none of that should re-render the document
+  // every tick of the clock, and none of that should re-render the documents
   // the patient is currently reading.
   const readingStartedAt = useRef<number | null>(null);
   const readingEndedAt = useRef<number | null>(null);
   const scrolledToBottom = useRef(false);
 
-  const loadTemplate = useCallback(
-    async (code: string) => {
+  const loadTemplates = useCallback(
+    async (codes: string[]) => {
       setIsLoading(true);
       setError(null);
       try {
-        const loaded = await getConsentTemplate(code);
-        if (!loaded) {
-          setError('No se encontró el consentimiento solicitado.');
-          setTemplate(null);
+        const loaded = await Promise.all(codes.map((code) => getConsentTemplate(code)));
+        const missing = codes.filter((_, i) => !loaded[i]);
+        if (missing.length > 0 || loaded.length === 0) {
+          setError(`No se encontró el consentimiento solicitado${missing.length ? ` (${missing.join(', ')})` : ''}.`);
+          setBaseTemplates([]);
+          setLoadedKey(null);
           return;
         }
+        const forms = loaded as ConsentTemplate[];
 
         // Only professional data comes from the session — the logged-in
         // account is the attending professional, not the patient. Patient
         // fields stay empty and are typed in for each patient seen.
         const prefilled: Record<string, string> = {};
-        for (const field of loaded.fields) {
+        for (const field of forms.flatMap((form) => form.fields)) {
           if (field.prefill === 'professional.name') prefilled[field.key] = user?.name ?? '';
           if (field.prefill === 'professional.email') prefilled[field.key] = user?.email ?? '';
         }
 
-        setTemplate(loaded);
+        setBaseTemplates(forms);
+        setLoadedKey(sessionKey(codes));
         setDecisionState(null);
-        setConsentId(createConsentId());
+        setConsentIds(forms.map(() => createConsentId()));
         setValues(prefilled);
         setSignatures({});
         setBiometricsState({});
-        setGeneratedPdfUri(null);
-        setSubmission(null);
+        setGeneratedPdfUris(forms.map(() => null));
+        setSubmissions(forms.map(() => null));
 
-        // The reading clock starts the moment the document is on screen.
+        // The reading clock starts the moment the documents are on screen.
         readingStartedAt.current = Date.now();
         readingEndedAt.current = null;
         scrolledToBottom.current = false;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'No se pudo cargar el consentimiento');
-        setTemplate(null);
+        setBaseTemplates([]);
+        setLoadedKey(null);
       } finally {
         setIsLoading(false);
       }
@@ -164,8 +242,8 @@ export function ConsentDraftProvider({ children }: { children: ReactNode }) {
     [user]
   );
 
-  // Changing the answer invalidates the patient's signature: they signed a
-  // document with the other text.
+  // Changing the answer invalidates the patient's signature: they signed
+  // documents with the other text.
   const setDecision = useCallback((choice: DecisionChoice | null) => {
     setDecisionState(choice);
     setSignatures({});
@@ -194,6 +272,10 @@ export function ConsentDraftProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setSubmission = useCallback((index: number, next: SubmissionState | null) => {
+    setSubmissions((prev) => prev.map((item, i) => (i === index ? next : item)));
+  }, []);
+
   const markScrolledToBottom = useCallback(() => {
     scrolledToBottom.current = true;
   }, []);
@@ -215,36 +297,37 @@ export function ConsentDraftProvider({ children }: { children: ReactNode }) {
 
   const isStageComplete = useCallback(
     (role: SignerRole) => {
-      if (!template) return false;
-      // A form with a decision step cannot be signed until the patient answers.
-      if (template.decision && !decision) return false;
+      if (baseTemplates.length === 0) return false;
+      // Forms with a decision step cannot be signed until the patient answers.
+      if (decisionStep && !decision) return false;
 
-      // Field values are the patient's responsibility; the professional stage
-      // only gates on its own signatures.
-      const fieldsOk =
-        role !== 'patient' ||
-        template.fields.every(
-          (field) => !field.required || (values[field.key] ?? '').trim().length > 0
-        );
+      // Each side answers for its own fields — the patient's before signing,
+      // the professional's (e.g. the decision-ability assessment) at the end.
+      // Whether one is required can depend on another answer.
+      const fieldsOk = fieldsFilledBy(fields, role, decision).every(
+        (field) =>
+          !isFieldRequired(field, values, decision) || (values[field.key] ?? '').trim().length > 0
+      );
 
-      const signaturesOk = template.signatures
+      const signaturesOk = signatureSlots
         .filter((slot) => slot.signer === role)
-        .every((slot) => !slot.required || Boolean(signatures[slot.key]));
+        .every((slot) => !isSignatureRequired(slot, values) || Boolean(signatures[slot.key]));
 
       return fieldsOk && signaturesOk;
     },
-    [template, decision, values, signatures]
+    [baseTemplates, decisionStep, decision, fields, signatureSlots, values, signatures]
   );
 
   const reset = useCallback(() => {
-    setTemplate(null);
+    setBaseTemplates([]);
+    setLoadedKey(null);
     setDecisionState(null);
-    setConsentId(null);
+    setConsentIds([]);
     setValues({});
     setSignatures({});
     setBiometricsState({});
-    setGeneratedPdfUri(null);
-    setSubmission(null);
+    setGeneratedPdfUris([]);
+    setSubmissions([]);
     setError(null);
     readingStartedAt.current = null;
     readingEndedAt.current = null;
@@ -253,23 +336,27 @@ export function ConsentDraftProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<ConsentDraftState>(
     () => ({
-      template,
-      baseTemplate,
+      templates,
+      baseTemplates,
+      loadedKey,
+      decisionStep,
       decision,
       setDecision,
-      consentId,
+      consentIds,
+      fields,
+      signatureSlots,
       values,
       signatures,
       biometrics,
-      generatedPdfUri,
-      submission,
+      generatedPdfUris,
+      submissions,
       isLoading,
       error,
-      loadTemplate,
+      loadTemplates,
       setValue,
       setSignature,
       setBiometrics,
-      setGeneratedPdfUri,
+      setGeneratedPdfUris,
       setSubmission,
       markScrolledToBottom,
       markReadingComplete,
@@ -278,22 +365,27 @@ export function ConsentDraftProvider({ children }: { children: ReactNode }) {
       reset,
     }),
     [
-      template,
-      baseTemplate,
+      templates,
+      baseTemplates,
+      loadedKey,
+      decisionStep,
       decision,
       setDecision,
-      consentId,
+      consentIds,
+      fields,
+      signatureSlots,
       values,
       signatures,
       biometrics,
-      generatedPdfUri,
-      submission,
+      generatedPdfUris,
+      submissions,
       isLoading,
       error,
-      loadTemplate,
+      loadTemplates,
       setValue,
       setSignature,
       setBiometrics,
+      setSubmission,
       markScrolledToBottom,
       markReadingComplete,
       getReadingMetrics,

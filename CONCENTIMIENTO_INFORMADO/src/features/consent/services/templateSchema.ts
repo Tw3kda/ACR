@@ -5,6 +5,7 @@ import type {
   ConsentField,
   ConsentTemplate,
   FooterCell,
+  RequiredWhen,
   SignatureSlot,
 } from '@/features/consent/types/consent';
 
@@ -83,13 +84,31 @@ function clampIndent(value: unknown): 0 | 1 | 2 | 3 {
   return 0;
 }
 
+const INPUTS = ['text', 'number', 'date', 'select'] as const;
+
+function parseCondition(raw: unknown, label: string): RequiredWhen | undefined {
+  if (raw === undefined || raw === null) return undefined;
+  const condition = asRecord(raw, label);
+  const values = asArray(condition.in, `${label}.in`).map((v, i) => asString(v, `${label}.in[${i}]`));
+  if (values.length === 0) throw new TemplateParseError(`${label}.in no puede estar vacío`);
+  return { key: asString(condition.key, `${label}.key`), in: values };
+}
+
 function parseField(raw: unknown, index: number): ConsentField {
   const field = asRecord(raw, `campo ${index}`);
-  const input = field.input === 'number' ? 'number' : 'text';
+  const input = INPUTS.find((type) => type === field.input) ?? 'text';
   const prefill =
     field.prefill === 'professional.name' || field.prefill === 'professional.email'
       ? field.prefill
       : undefined;
+
+  let options: string[] | undefined;
+  if (input === 'select') {
+    options = asArray(field.options, `campo ${index}.options`).map((o, i) =>
+      asString(o, `campo ${index}.options[${i}]`)
+    );
+    if (options.length < 2) throw new TemplateParseError(`campo ${index}.options necesita al menos dos opciones`);
+  }
 
   return {
     key: asString(field.key, `campo ${index}.key`),
@@ -98,6 +117,11 @@ function parseField(raw: unknown, index: number): ConsentField {
     required: field.required !== false,
     placeholder: typeof field.placeholder === 'string' ? field.placeholder : undefined,
     prefill,
+    options,
+    multiple: input === 'select' && field.multiple === true ? true : undefined,
+    filledBy: field.filledBy === 'professional' ? 'professional' : undefined,
+    decision: field.decision === 'accept' || field.decision === 'decline' ? field.decision : undefined,
+    requiredWhen: parseCondition(field.requiredWhen, `campo ${index}.requiredWhen`),
   };
 }
 
@@ -111,6 +135,7 @@ function parseSignature(raw: unknown, index: number): SignatureSlot {
     label: asString(slot.label, `firma ${index}.label`),
     signer: slot.signer,
     required: slot.required !== false,
+    requiredWhen: parseCondition(slot.requiredWhen, `firma ${index}.requiredWhen`),
   };
 }
 
@@ -185,6 +210,7 @@ export function parseConsentTemplate(raw: unknown): ConsentTemplate {
     version: asString(doc.version, 'version'),
     title: asString(doc.title, 'title'),
     examType: typeof doc.examType === 'string' && doc.examType.length > 0 ? doc.examType : undefined,
+    audience: doc.audience === 'minor' ? 'minor' : 'adult',
     effectiveDate: asString(doc.effectiveDate, 'effectiveDate'),
     blocks: asArray(doc.blocks, 'blocks').map(parseBlock),
     fields,

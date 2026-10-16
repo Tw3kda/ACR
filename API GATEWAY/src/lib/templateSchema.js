@@ -63,16 +63,44 @@ function parseBlock(raw, i) {
   }
 }
 
+const INPUTS = new Set(['text', 'number', 'date', 'select']);
+
+/**
+ * `{ key, in: [...] }`: lo que la declara solo es obligatorio cuando el campo
+ * `key` tiene uno de esos valores (en una selección múltiple, cuando incluye
+ * alguno). Se comprueba después que `key` exista.
+ */
+function parseCondition(raw, label) {
+  if (raw === undefined || raw === null) return undefined;
+  const c = record(raw, label);
+  const values = list(c.in, `${label}.in`).map((v, j) => text(v, `${label}.in[${j}]`));
+  if (values.length === 0) throw fail(`${label}.in no puede estar vacío`, label);
+  return { key: text(c.key, `${label}.key`), in: values };
+}
+
 function parseField(raw, i) {
   const f = record(raw, `fields[${i}]`);
+  const input = INPUTS.has(f.input) ? f.input : 'text';
   const out = {
     key: text(f.key, `fields[${i}].key`),
     label: text(f.label, `fields[${i}].label`),
-    input: f.input === 'number' ? 'number' : 'text',
+    input,
     required: f.required !== false,
   };
   if (typeof f.placeholder === 'string') out.placeholder = f.placeholder;
   if (f.prefill === 'professional.name' || f.prefill === 'professional.email') out.prefill = f.prefill;
+  if (input === 'select') {
+    out.options = list(f.options, `fields[${i}].options`).map((o, j) => text(o, `fields[${i}].options[${j}]`));
+    if (out.options.length < 2) throw fail(`fields[${i}].options necesita al menos dos opciones`, `fields[${i}].options`);
+    if (f.multiple === true) out.multiple = true;
+  }
+  // Quién lo diligencia: el paciente (o su representante) antes de firmar, o
+  // el profesional en su paso de firma.
+  if (f.filledBy === 'professional') out.filledBy = 'professional';
+  // Solo se muestra (y solo se exige) con esa respuesta a la decisión.
+  if (f.decision === 'accept' || f.decision === 'decline') out.decision = f.decision;
+  const requiredWhen = parseCondition(f.requiredWhen, `fields[${i}].requiredWhen`);
+  if (requiredWhen) out.requiredWhen = requiredWhen;
   return out;
 }
 
@@ -81,12 +109,15 @@ function parseSignature(raw, i) {
   if (s.signer !== 'patient' && s.signer !== 'professional') {
     throw fail(`signatures[${i}].signer debe ser "patient" o "professional"`, `signatures[${i}].signer`);
   }
-  return {
+  const out = {
     key: text(s.key, `signatures[${i}].key`),
     label: text(s.label, `signatures[${i}].label`),
     signer: s.signer,
     required: s.required !== false,
   };
+  const requiredWhen = parseCondition(s.requiredWhen, `signatures[${i}].requiredWhen`);
+  if (requiredWhen) out.requiredWhen = requiredWhen;
+  return out;
 }
 
 function parseFooterCell(raw, i) {
@@ -136,6 +167,18 @@ export function parseTemplate(raw) {
   const dup = keys.find((k, i) => keys.indexOf(k) !== i);
   if (dup) throw fail(`la clave "${dup}" está repetida entre campos y firmas`, 'fields');
 
+  // Una condición debe apuntar a un campo de selección de esta plantilla y a
+  // opciones que ese campo ofrece: si no, nunca se cumpliría.
+  for (const item of [...fields, ...signatures]) {
+    if (!item.requiredWhen) continue;
+    const target = fields.find((f) => f.key === item.requiredWhen.key);
+    if (!target || target.input !== 'select') {
+      throw fail(`"${item.key}".requiredWhen apunta a "${item.requiredWhen.key}", que no es un campo de selección`, 'fields');
+    }
+    const unknown = item.requiredWhen.in.find((v) => !target.options.includes(v));
+    if (unknown) throw fail(`"${item.key}".requiredWhen usa la opción inexistente "${unknown}"`, 'fields');
+  }
+
   const footer =
     doc.footer === undefined
       ? [...signatures.map((s) => ({ type: 'signature', key: s.key })), { type: 'date' }]
@@ -155,11 +198,15 @@ export function parseTemplate(raw) {
   const effectiveDate = text(doc.effectiveDate, 'effectiveDate');
   if (!DATE.test(effectiveDate)) throw fail('effectiveDate debe ser una fecha AAAA-MM-DD', 'effectiveDate');
 
+  // Pestaña de la tablet: adultos o menores de edad. Sin el dato, adultos.
+  const audience = doc.audience === 'minor' ? 'minor' : 'adult';
+
   const out = {
     code,
     version,
     title: text(doc.title, 'title'),
     examType,
+    audience,
     effectiveDate,
     blocks,
     fields,

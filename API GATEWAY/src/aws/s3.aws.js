@@ -93,3 +93,12 @@ export async function presignPdfGet({ bucket, key, filename, inline = false }) {
   );
   return { url, expiresIn, filename: safeName };
 }
+
+/**
+ * Bytes de un PDF guardado, para unir varios en uno (descarga del día). Lee con
+ * el rol de la Lambda, el mismo permiso s3:GetObject con que se firman los enlaces.
+ */
+export async function getPdfObject({ bucket, key }) {
+  const res = await getClient().send(new GetObjectCommand({ Bucket: bucket ?? config.s3.bucket, Key: key }));
+  return Buffer.from(await res.Body.transformToByteArray());
+}
